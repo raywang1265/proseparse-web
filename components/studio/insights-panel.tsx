@@ -18,18 +18,19 @@ export function InsightsPanel({
   onSelectBlock: (b: number | null) => void
 }) {
   return (
-    <aside className="flex h-full w-[27rem] shrink-0 flex-col border-l border-border bg-card/40">
+    <aside className="flex h-full w-[27rem] shrink-0 flex-col border-l border-border/40 bg-card/30">
       <Tabs defaultValue="narrative" className="flex h-full min-h-0 flex-col gap-0">
-        <div className="border-b border-border px-3 pb-2 pt-3">
+        <div className="px-4 pb-3 pt-4">
           <div className="mb-3 flex items-center justify-between px-1">
-            <h2 className="text-sm font-semibold text-foreground">
-              Insights Engine
+            <h2 className="font-serif text-base font-semibold tracking-tight text-foreground">
+              Insights
             </h2>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-              ML · v2.4
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-primary" />
+              live
             </span>
           </div>
-          <TabsList className="grid h-auto w-full grid-cols-4 bg-muted/60 p-1">
+          <TabsList className="grid h-auto w-full grid-cols-4 rounded-2xl bg-muted/50 p-1">
             <TabTrigger value="style" icon={Type} label="Style" />
             <TabTrigger value="narrative" icon={Activity} label="Pacing" />
             <TabTrigger value="sensory" icon={Palette} label="Sensory" />
@@ -74,7 +75,7 @@ function TabTrigger({
   return (
     <TabsTrigger
       value={value}
-      className="flex-col gap-1 py-1.5 text-[11px] data-[state=active]:bg-background"
+      className="flex-col gap-1 rounded-xl py-1.5 text-[11px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
     >
       <Icon className="size-4" />
       {label}

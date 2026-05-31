@@ -17,7 +17,7 @@ export function InsightCard({
   return (
     <div
       className={cn(
-        'rounded-lg border border-border bg-card p-4',
+        'rounded-3xl border border-border/50 bg-card/60 p-5',
         className,
       )}
     >

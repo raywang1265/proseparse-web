@@ -18,10 +18,10 @@ export function SessionSidebar({
   if (collapsed) return null
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-sidebar-border/50 bg-sidebar">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <div className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <FileText className="size-4" />
           </div>
           <span className="font-serif text-base font-semibold tracking-tight">
@@ -66,7 +66,7 @@ export function SessionSidebar({
             <li key={s.id}>
               <button
                 className={cn(
-                  'group flex w-full flex-col gap-1.5 rounded-md px-2.5 py-2 text-left transition-colors',
+                  'group flex w-full flex-col gap-1.5 rounded-2xl px-3 py-2.5 text-left transition-colors',
                   s.active
                     ? 'bg-sidebar-accent'
                     : 'hover:bg-sidebar-accent/60',

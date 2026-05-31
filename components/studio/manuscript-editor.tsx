@@ -40,7 +40,7 @@ export function ManuscriptEditor({
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-background">
       {/* Editor toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 px-6 py-3">
         <div className="min-w-0">
           <h1 className="truncate font-serif text-lg font-semibold tracking-tight">
             Ch. 12 — The Lighthouse
@@ -85,8 +85,8 @@ export function ManuscriptEditor({
                 onMouseEnter={() => onHoverBlock(p.block)}
                 onMouseLeave={() => onHoverBlock(null)}
                 className={cn(
-                  '-mx-3 mb-5 scroll-mt-6 rounded-md px-3 py-1 font-serif text-[1.0625rem] leading-[1.85] text-foreground/90 transition-colors',
-                  isActive && 'bg-accent/60 ring-1 ring-primary/30',
+                  '-mx-4 mb-5 scroll-mt-6 rounded-2xl px-4 py-2 font-serif text-[1.0625rem] leading-[1.85] text-foreground/90 transition-colors',
+                  isActive && 'bg-accent/60 ring-1 ring-primary/20',
                 )}
               >
                 {p.segments.map((seg, i) => {
@@ -96,7 +96,7 @@ export function ManuscriptEditor({
                       key={i}
                       className={cn(
                         highlighted &&
-                          'rounded-[3px] px-0.5 py-px',
+                          'rounded-md px-1 py-0.5',
                         highlighted && HL_BG[seg.kind as HighlightKind],
                       )}
                     >

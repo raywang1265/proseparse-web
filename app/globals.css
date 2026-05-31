@@ -42,7 +42,7 @@
   --hl-tag: oklch(0.62 0.18 295 / 0.3);
   --hl-tag-foreground: oklch(0.4 0.12 295);
 
-  --radius: 0.5rem;
+  --radius: 0.95rem;
 
   --sidebar: oklch(0.95 0.006 85);
   --sidebar-foreground: oklch(0.27 0.02 260);
