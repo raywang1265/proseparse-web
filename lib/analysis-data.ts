@@ -254,6 +254,37 @@ export const PACING = [
   { section: 'p. 6', action: 15, description: 50, dialogue: 35 },
 ]
 
+// Direct exposition = information stated outright by the narrator (telling).
+// Indirect exposition = information revealed through action, dialogue, and
+// sensory implication (showing). Aligned to manuscript blocks so the chart can
+// be tethered to the editor. `direct` is rendered as a negative value to create
+// a diverging bar around a zero baseline.
+export type ExpositionPoint = {
+  block: number
+  label: string
+  direct: number // 0..100 share of the paragraph that "tells"
+  indirect: number // 0..100 share that "shows"
+}
+
+const EXPOSITION_SPLIT = [
+  { direct: 70, indirect: 30 },
+  { direct: 35, indirect: 65 },
+  { direct: 20, indirect: 80 },
+  { direct: 55, indirect: 45 },
+  { direct: 15, indirect: 85 },
+  { direct: 25, indirect: 75 },
+  { direct: 60, indirect: 40 },
+  { direct: 18, indirect: 82 },
+  { direct: 48, indirect: 52 },
+]
+
+export const EXPOSITION: ExpositionPoint[] = MANUSCRIPT.map((p, i) => ({
+  block: p.block,
+  label: `¶${p.block + 1}`,
+  direct: EXPOSITION_SPLIT[i]?.direct ?? 50,
+  indirect: EXPOSITION_SPLIT[i]?.indirect ?? 50,
+}))
+
 // ---- Sensory Palette -------------------------------------------------------
 export const SENSORY = [
   { sense: 'Visual', score: 86 },
