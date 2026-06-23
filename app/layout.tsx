@@ -20,9 +20,9 @@ const _geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Margin · Writing Analysis Studio',
+  title: 'ProseParse · Writing Analysis Studio',
   description:
-    'Deep, ML-powered analysis for novelists and editors — tension, pacing, voice, and sensory detail, beautifully visualized.',
+    'ProseParse gives novelists and editors deep, ML-powered analysis — tension, pacing, voice, exposition, and sensory detail, beautifully visualized alongside your manuscript.',
   generator: 'v0.app',
 }
 

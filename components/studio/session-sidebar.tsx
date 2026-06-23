@@ -1,7 +1,9 @@
 'use client'
 
-import { Plus, PanelLeftClose, Search, FileText } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, PanelLeftClose, Search } from 'lucide-react'
 import { SESSIONS } from '@/lib/analysis-data'
+import { Logo } from '@/components/brand/logo'
 import { Sparkline } from './sparkline'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,14 +22,9 @@ export function SessionSidebar({
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-sidebar-border/50 bg-sidebar">
       <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <FileText className="size-4" />
-          </div>
-          <span className="font-serif text-base font-semibold tracking-tight">
-            Margin
-          </span>
-        </div>
+        <Link href="/">
+          <Logo />
+        </Link>
         <Button
           variant="ghost"
           size="icon"
