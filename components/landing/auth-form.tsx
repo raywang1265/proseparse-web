@@ -21,12 +21,12 @@ export function AuthForm() {
   return (
     <div className="w-full max-w-sm">
       <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-        {isSignup ? 'Create your account' : 'Welcome back'}
+        {isSignup ? 'Make yourself at home' : 'Welcome back'}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {isSignup
-          ? 'Start mapping your manuscript in minutes.'
-          : 'Sign in to pick up where your draft left off.'}
+          ? 'Set up a spot to keep your drafts and notes.'
+          : "Good to see you — let's pick up where you left off."}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">

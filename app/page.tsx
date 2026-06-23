@@ -1,17 +1,11 @@
 import { SiteNav } from '@/components/landing/site-nav'
-import { Hero } from '@/components/landing/hero'
-import { Features } from '@/components/landing/features'
-import { Lenses } from '@/components/landing/lenses'
-import { Closing } from '@/components/landing/closing'
+import { Welcome } from '@/components/landing/welcome'
 
-export default function LandingPage() {
+export default function HomePage() {
   return (
-    <main className="min-h-dvh bg-background text-foreground">
+    <main className="flex min-h-dvh flex-col bg-background text-foreground">
       <SiteNav />
-      <Hero />
-      <Features />
-      <Lenses />
-      <Closing />
+      <Welcome />
     </main>
   )
 }

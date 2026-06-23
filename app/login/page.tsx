@@ -18,13 +18,13 @@ export default function LoginPage() {
             cold glass and tasted salt on the wind.&rdquo;
           </p>
           <footer className="mt-5 text-sm text-muted-foreground">
-            ProseParse mapped this passage&apos;s tension, voice, and sensory
-            texture in under a second.
+            A passage from a draft, read closely — its tension, voice, and
+            sensory texture mapped line by line.
           </footer>
         </blockquote>
 
         <span className="text-sm text-muted-foreground">
-          See your story the way a reader feels it.
+          A quiet place to read your own writing more closely.
         </span>
       </aside>
 
