@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
@@ -40,7 +41,9 @@ export default function LoginPage() {
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center px-5 pb-16">
-          <AuthForm />
+          <Suspense>
+            <AuthForm />
+          </Suspense>
         </div>
       </div>
     </main>

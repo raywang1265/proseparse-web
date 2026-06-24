@@ -6,6 +6,7 @@ import { SessionSidebar } from './session-sidebar'
 import { ManuscriptEditor, type Lens } from './manuscript-editor'
 import { InsightsPanel } from './insights-panel'
 import { ThemeToggle } from './theme-toggle'
+import { UserMenu } from './user-menu'
 import { Button } from '@/components/ui/button'
 
 export function Workspace() {
@@ -45,6 +46,7 @@ export function Workspace() {
             Re-analyze
           </Button>
           <ThemeToggle />
+          <UserMenu />
         </div>
       </header>
 
