@@ -14,18 +14,24 @@ import {
   YAxis,
 } from 'recharts'
 import { MousePointerClick } from 'lucide-react'
-import { TENSION, PACING, EXPOSITION } from '@/lib/analysis-data'
 import { InsightCard } from '../insight-card'
+import type { StudioAnalysis } from '../types'
 
 export function NarrativeTab({
+  analysis,
   activeBlock,
   onHoverBlock,
   onSelectBlock,
 }: {
+  analysis: StudioAnalysis
   activeBlock: number | null
   onHoverBlock: (b: number | null) => void
   onSelectBlock: (b: number | null) => void
 }) {
+  const TENSION = analysis.tension ?? []
+  const PACING = analysis.pacing ?? []
+  const EXPOSITION = analysis.exposition ?? []
+
   return (
     <div className="flex flex-col gap-4">
       <InsightCard

@@ -1,18 +1,18 @@
 'use client'
 
 import { AlertTriangle, AlertCircle, Info } from 'lucide-react'
-import {
-  CHARACTERS,
-  VOICE_MATRIX,
-  DIALOGUE_ISSUES,
-  type DialogueIssue,
-} from '@/lib/analysis-data'
+import { type DialogueIssue, type CharacterPair } from '@/lib/analysis-data'
 import { InsightCard } from '../insight-card'
 import { cn } from '@/lib/utils'
+import type { StudioAnalysis } from '../types'
 
-function similarityFor(a: string, b: string) {
+function similarityFor(
+  matrix: CharacterPair[],
+  a: string,
+  b: string,
+) {
   if (a === b) return null
-  const pair = VOICE_MATRIX.find(
+  const pair = matrix.find(
     (p) => (p.a === a && p.b === b) || (p.a === b && p.b === a),
   )
   return pair?.similarity ?? null
@@ -26,10 +26,16 @@ function cellColor(sim: number) {
 }
 
 export function CharacterTab({
+  analysis,
   onSelectBlock,
 }: {
+  analysis: StudioAnalysis
   onSelectBlock: (b: number | null) => void
 }) {
+  const CHARACTERS = analysis.characters ?? []
+  const VOICE_MATRIX = analysis.voiceMatrix ?? []
+  const DIALOGUE_ISSUES = analysis.dialogueIssues ?? []
+
   return (
     <div className="flex flex-col gap-4">
       <InsightCard
@@ -58,7 +64,7 @@ export function CharacterTab({
                     {row.split(' ')[0]}
                   </th>
                   {CHARACTERS.map((col) => {
-                    const sim = similarityFor(row, col)
+                    const sim = similarityFor(VOICE_MATRIX, row, col)
                     return (
                       <td key={col}>
                         {sim == null ? (

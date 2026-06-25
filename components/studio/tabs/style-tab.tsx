@@ -9,15 +9,15 @@ import {
   ResponsiveContainer,
   XAxis,
 } from 'recharts'
-import {
-  VOICE_SPLIT,
-  SENTENCE_LENGTHS,
-  STYLE_METRICS,
-  DIALOGUE_TAGS,
-} from '@/lib/analysis-data'
 import { InsightCard } from '../insight-card'
+import type { StudioAnalysis } from '../types'
 
-export function StyleTab() {
+export function StyleTab({ analysis }: { analysis: StudioAnalysis }) {
+  const VOICE_SPLIT = analysis.voiceSplit ?? []
+  const SENTENCE_LENGTHS = analysis.sentenceLengths ?? []
+  const STYLE_METRICS = analysis.styleMetrics ?? []
+  const DIALOGUE_TAGS = analysis.dialogueTags ?? []
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
@@ -130,7 +130,7 @@ export function StyleTab() {
       >
         <ul className="space-y-2">
           {DIALOGUE_TAGS.map((t) => {
-            const max = DIALOGUE_TAGS[0].count
+            const max = DIALOGUE_TAGS[0]?.count ?? 1
             return (
               <li key={t.tag} className="flex items-center gap-3 text-sm">
                 <span className="w-20 shrink-0 font-serif italic text-foreground/80">

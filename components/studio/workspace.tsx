@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PanelLeftOpen, Sparkles } from 'lucide-react'
 import { SessionSidebar } from './session-sidebar'
 import { ManuscriptEditor, type Lens } from './manuscript-editor'
@@ -8,16 +8,73 @@ import { InsightsPanel } from './insights-panel'
 import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
 import { Button } from '@/components/ui/button'
+import { saveSessionTextAction } from '@/app/studio/actions'
+import type { SidebarSession, ActiveSession, ViewState } from './types'
 
-export function Workspace() {
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+export function Workspace({
+  sessions,
+  activeId,
+  active,
+}: {
+  sessions: SidebarSession[]
+  activeId: string | null
+  active: ActiveSession | null
+}) {
   const [collapsed, setCollapsed] = useState(false)
   const [lens, setLens] = useState<Lens>('none')
-  // shared "active paragraph" tethering the editor and the charts
   const [activeBlock, setActiveBlock] = useState<number | null>(null)
+  const [mode, setMode] = useState<'read' | 'edit'>(
+    active?.viewState === 'fresh' ? 'read' : 'edit',
+  )
+
+  const [text, setText] = useState(active?.text ?? '')
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // An edit that diverges from the analyzed snapshot makes the analysis stale
+  // immediately in the UI — without waiting for a server round-trip.
+  const locallyEdited = active != null && text !== active.text
+  const effectiveViewState: ViewState =
+    locallyEdited && active?.analysis ? 'stale' : (active?.viewState ?? 'unanalyzed')
+
+  const scheduleSave = useCallback(
+    (next: string) => {
+      if (!active) return
+      if (timer.current) clearTimeout(timer.current)
+      setSaveState('saving')
+      timer.current = setTimeout(async () => {
+        try {
+          await saveSessionTextAction(active.id, next)
+          setSaveState('saved')
+        } catch {
+          setSaveState('error')
+        }
+      }, 800)
+    },
+    [active],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
+    }
+  }, [])
+
+  function handleTextChange(next: string) {
+    setText(next)
+    scheduleSave(next)
+  }
+
+  const canReanalyze =
+    active != null &&
+    (effectiveViewState === 'stale' ||
+      effectiveViewState === 'unanalyzed' ||
+      effectiveViewState === 'error')
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-      {/* Global top bar */}
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/40 px-3">
         <div className="flex items-center gap-2">
           {collapsed && (
@@ -34,12 +91,18 @@ export function Workspace() {
           <span className="text-sm text-muted-foreground">
             <span className="text-foreground/80">Saltwater</span>
             <span className="mx-1.5 text-muted-foreground/50">/</span>
-            Ch. 12 — The Lighthouse
+            {active?.title ?? 'No session'}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <Button
             size="sm"
+            disabled={!canReanalyze}
+            title={
+              canReanalyze
+                ? 'Re-analyze this draft'
+                : 'Analysis is up to date'
+            }
             className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Sparkles className="size-3.5" />
@@ -50,23 +113,44 @@ export function Workspace() {
         </div>
       </header>
 
-      {/* 3-pane body */}
       <div className="flex min-h-0 flex-1">
         <SessionSidebar
+          sessions={sessions}
+          activeId={activeId}
           collapsed={collapsed}
           onCollapse={() => setCollapsed(true)}
         />
-        <ManuscriptEditor
-          lens={lens}
-          onLensChange={setLens}
-          activeBlock={activeBlock}
-          onHoverBlock={setActiveBlock}
-        />
-        <InsightsPanel
-          activeBlock={activeBlock}
-          onHoverBlock={setActiveBlock}
-          onSelectBlock={setActiveBlock}
-        />
+        {active ? (
+          <>
+            <ManuscriptEditor
+              sessionId={active.id}
+              title={active.title}
+              wordCount={active.wordCount}
+              viewState={effectiveViewState}
+              mode={mode}
+              onModeChange={setMode}
+              text={text}
+              onTextChange={handleTextChange}
+              saveState={saveState}
+              paragraphs={active.analysis?.paragraphs ?? null}
+              lens={lens}
+              onLensChange={setLens}
+              activeBlock={activeBlock}
+              onHoverBlock={setActiveBlock}
+            />
+            <InsightsPanel
+              viewState={effectiveViewState}
+              analysis={active.analysis}
+              activeBlock={activeBlock}
+              onHoverBlock={setActiveBlock}
+              onSelectBlock={setActiveBlock}
+            />
+          </>
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+            Select or create a session to begin.
+          </div>
+        )}
       </div>
     </div>
   )

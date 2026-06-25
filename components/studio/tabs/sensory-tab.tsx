@@ -7,10 +7,12 @@ import {
   RadarChart,
   ResponsiveContainer,
 } from 'recharts'
-import { SENSORY } from '@/lib/analysis-data'
 import { InsightCard } from '../insight-card'
+import type { StudioAnalysis } from '../types'
 
-export function SensoryTab() {
+export function SensoryTab({ analysis }: { analysis: StudioAnalysis }) {
+  const SENSORY = analysis.sensory ?? []
+
   return (
     <div className="flex flex-col gap-4">
       <InsightCard
@@ -54,10 +56,11 @@ export function SensoryTab() {
             </li>
           ))}
         </ul>
-        <p className="mt-3 rounded-md bg-accent/50 px-3 py-2 text-xs leading-relaxed text-accent-foreground">
-          Taste and smell are underused. Consider grounding the lighthouse
-          interior with an olfactory detail to deepen immersion.
-        </p>
+        {analysis.sensoryAdvice && (
+          <p className="mt-3 rounded-md bg-accent/50 px-3 py-2 text-xs leading-relaxed text-accent-foreground">
+            {analysis.sensoryAdvice}
+          </p>
+        )}
       </InsightCard>
     </div>
   )
