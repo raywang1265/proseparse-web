@@ -56,6 +56,26 @@ export const users = pgTable('users', {
 })
 
 // ---------------------------------------------------------------------------
+// folders
+// Optional depth-one containers for grouping sessions. Sessions without a
+// folderId belong to the implicit "root" workspace.
+// ---------------------------------------------------------------------------
+
+export const folders = pgTable(
+  'folders',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('folders_user_id_idx').on(t.userId)],
+)
+
+// ---------------------------------------------------------------------------
 // sessions
 // Each session is one "analysis run" — a title, the raw manuscript text the
 // user submitted, and processing metadata.
@@ -68,6 +88,8 @@ export const sessions = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    // Optional folder assignment. Null means the session lives at root.
+    folderId: text('folder_id').references(() => folders.id, { onDelete: 'set null' }),
     title: text('title').notNull(),
     manuscriptText: text('manuscript_text').notNull().default(''),
     // Hash of the current manuscriptText; recomputed on every (autosaved) edit.
@@ -177,6 +199,9 @@ export const analysisResults = pgTable(
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+
+export type DbFolder = typeof folders.$inferSelect
+export type NewFolder = typeof folders.$inferInsert
 
 export type DbSession = typeof sessions.$inferSelect
 export type NewSession = typeof sessions.$inferInsert

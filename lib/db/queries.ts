@@ -2,8 +2,8 @@ import 'server-only'
 
 import { and, desc, eq } from 'drizzle-orm'
 import { db } from './index'
-import { users, sessions, analysisResults } from './schema'
-import type { DbSession, AnalysisResult } from './schema'
+import { users, sessions, folders, analysisResults } from './schema'
+import type { DbSession, DbFolder, AnalysisResult } from './schema'
 import { hashContent, countWords } from './hash'
 import { getViewState, type AnalysisViewState } from './staleness'
 import type { ServerUser } from '@/lib/auth/server'
@@ -37,9 +37,89 @@ export async function ensureUser(user: ServerUser): Promise<void> {
 // Sessions
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Folders
+// ---------------------------------------------------------------------------
+
+export type FolderListItem = Pick<DbFolder, 'id' | 'name'>
+
+export async function listFolders(userId: string): Promise<FolderListItem[]> {
+  return db
+    .select({ id: folders.id, name: folders.name })
+    .from(folders)
+    .where(eq(folders.userId, userId))
+    .orderBy(folders.createdAt)
+}
+
+export async function createFolder(
+  userId: string,
+  name: string,
+): Promise<DbFolder> {
+  const [folder] = await db
+    .insert(folders)
+    .values({ id: crypto.randomUUID(), userId, name: name.trim() || 'New folder' })
+    .returning()
+  return folder
+}
+
+export async function renameFolder(
+  userId: string,
+  folderId: string,
+  name: string,
+): Promise<boolean> {
+  const result = await db
+    .update(folders)
+    .set({ name: name.trim() || 'New folder', updatedAt: new Date() })
+    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+    .returning({ id: folders.id })
+  return result.length > 0
+}
+
+// Deletes the folder and moves its sessions back to root (folderId → null).
+// The SET NULL behaviour is enforced by the FK constraint, so a plain delete
+// is sufficient — Postgres will null the sessions.folder_id automatically.
+export async function deleteFolder(
+  userId: string,
+  folderId: string,
+): Promise<boolean> {
+  const result = await db
+    .delete(folders)
+    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+    .returning({ id: folders.id })
+  return result.length > 0
+}
+
+export async function moveSession(
+  userId: string,
+  sessionId: string,
+  folderId: string | null,
+): Promise<boolean> {
+  // Verify the target folder belongs to this user when non-null.
+  if (folderId !== null) {
+    const [folder] = await db
+      .select({ id: folders.id })
+      .from(folders)
+      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+      .limit(1)
+    if (!folder) return false
+  }
+
+  const result = await db
+    .update(sessions)
+    .set({ folderId })
+    .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+    .returning({ id: sessions.id })
+  return result.length > 0
+}
+
+// ---------------------------------------------------------------------------
+// Sessions
+// ---------------------------------------------------------------------------
+
 export type SessionListItem = {
   id: string
   title: string
+  folderId: string | null
   wordCount: number
   status: DbSession['status']
   updatedAt: Date
@@ -54,6 +134,7 @@ export async function listSessions(userId: string): Promise<SessionListItem[]> {
     .select({
       id: sessions.id,
       title: sessions.title,
+      folderId: sessions.folderId,
       wordCount: sessions.wordCount,
       status: sessions.status,
       updatedAt: sessions.updatedAt,
@@ -69,6 +150,7 @@ export async function listSessions(userId: string): Promise<SessionListItem[]> {
   return rows.map((r) => ({
     id: r.id,
     title: r.title,
+    folderId: r.folderId ?? null,
     wordCount: r.wordCount,
     status: r.status,
     updatedAt: r.updatedAt,

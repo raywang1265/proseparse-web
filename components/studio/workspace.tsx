@@ -9,16 +9,18 @@ import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
 import { Button } from '@/components/ui/button'
 import { saveSessionTextAction } from '@/app/studio/actions'
-import type { SidebarSession, ActiveSession, ViewState } from './types'
+import type { SidebarSession, SidebarFolder, ActiveSession, ViewState } from './types'
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function Workspace({
   sessions,
+  folders,
   activeId,
   active,
 }: {
   sessions: SidebarSession[]
+  folders: SidebarFolder[]
   activeId: string | null
   active: ActiveSession | null
 }) {
@@ -116,6 +118,7 @@ export function Workspace({
       <div className="flex min-h-0 flex-1">
         <SessionSidebar
           sessions={sessions}
+          folders={folders}
           activeId={activeId}
           collapsed={collapsed}
           onCollapse={() => setCollapsed(true)}

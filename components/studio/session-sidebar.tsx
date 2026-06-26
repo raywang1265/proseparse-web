@@ -10,6 +10,18 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
+import {
   Plus,
   PanelLeftClose,
   Search,
@@ -17,6 +29,11 @@ import {
   Pencil,
   MoreHorizontal,
   Trash2,
+  FolderPlus,
+  Folder,
+  FolderOpen,
+  ChevronRight,
+  FolderX,
 } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 import { Sparkline } from './sparkline'
@@ -44,8 +61,12 @@ import {
   createSessionAction,
   renameSessionAction,
   deleteSessionAction,
+  createFolderAction,
+  renameFolderAction,
+  deleteFolderAction,
+  moveSessionAction,
 } from '@/app/studio/actions'
-import type { SidebarSession, ViewState } from './types'
+import type { SidebarSession, SidebarFolder, ViewState } from './types'
 
 const STATUS_DOT: Record<ViewState, string | null> = {
   fresh: null,
@@ -55,13 +76,19 @@ const STATUS_DOT: Record<ViewState, string | null> = {
   error: 'bg-destructive',
 }
 
+// ---------------------------------------------------------------------------
+// Root sidebar
+// ---------------------------------------------------------------------------
+
 export function SessionSidebar({
-  sessions,
+  sessions: initialSessions,
+  folders: initialFolders,
   activeId,
   collapsed,
   onCollapse,
 }: {
   sessions: SidebarSession[]
+  folders: SidebarFolder[]
   activeId: string | null
   collapsed: boolean
   onCollapse: () => void
@@ -70,9 +97,29 @@ export function SessionSidebar({
   const [query, setQuery] = useState('')
   const [pending, startTransition] = useTransition()
 
+  // Optimistic state for drag-and-drop moves
+  const [sessions, setSessions] = useState(initialSessions)
+  const [folders, setFolders] = useState(initialFolders)
+
+  // Folder whose name should immediately enter edit mode after creation
+  const [pendingFolderId, setPendingFolderId] = useState<string | null>(null)
+
+  // ID of the session currently being dragged
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+
+  // Sync when server data refreshes (after revalidatePath)
+  useEffect(() => { setSessions(initialSessions) }, [initialSessions])
+  useEffect(() => { setFolders(initialFolders) }, [initialFolders])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  )
+
   if (collapsed) return null
 
-  const filtered = query.trim()
+  const isSearching = query.trim().length > 0
+
+  const filtered = isSearching
     ? sessions.filter((s) =>
         s.title.toLowerCase().includes(query.trim().toLowerCase()),
       )
@@ -84,6 +131,52 @@ export function SessionSidebar({
       router.push(`/studio?s=${id}`)
     })
   }
+
+  function handleNewFolder() {
+    startTransition(async () => {
+      const { id } = await createFolderAction('New folder')
+      setFolders((prev) => [...prev, { id, name: 'New folder' }])
+      setPendingFolderId(id)
+    })
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveDragId(event.active.id as string)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveDragId(null)
+    const { active, over } = event
+    if (!over) return
+
+    const sessionId = active.id as string
+    const session = sessions.find((s) => s.id === sessionId)
+    if (!session) return
+
+    // over.id is either a folderId string or the sentinel 'root'
+    const targetFolderId = over.id === 'root' ? null : (over.id as string)
+
+    if (session.folderId === targetFolderId) return
+
+    // Optimistic update
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId ? { ...s, folderId: targetFolderId } : s,
+      ),
+    )
+
+    startTransition(async () => {
+      try {
+        await moveSessionAction(sessionId, targetFolderId)
+      } catch {
+        setSessions(initialSessions)
+      }
+    })
+  }
+
+  const draggedSession = activeDragId
+    ? sessions.find((s) => s.id === activeDragId)
+    : null
 
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-sidebar-border/50 bg-sidebar">
@@ -102,7 +195,7 @@ export function SessionSidebar({
         </Button>
       </div>
 
-      <div className="px-3">
+      <div className="flex flex-col gap-1.5 px-3">
         <Button
           onClick={handleNew}
           disabled={pending}
@@ -114,6 +207,15 @@ export function SessionSidebar({
             <Plus className="size-4" />
           )}
           New Analysis
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={handleNewFolder}
+          disabled={pending}
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <FolderPlus className="size-4" />
+          New Folder
         </Button>
       </div>
 
@@ -129,33 +231,342 @@ export function SessionSidebar({
         </div>
       </div>
 
-      <p className="px-4 pb-1 pt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        Recent sessions
-      </p>
-
       <ScrollArea className="flex-1 px-2">
-        <ul className="flex flex-col gap-0.5 pb-4">
-          {filtered.map((s) => (
-            <SessionItem key={s.id} session={s} activeId={activeId} />
-          ))}
-          {filtered.length === 0 && (
-            <li className="px-3 py-6 text-center text-xs text-muted-foreground">
-              No sessions match “{query}”.
-            </li>
-          )}
-        </ul>
+        {isSearching ? (
+          // Flat filtered list while searching — no drag-and-drop
+          <ul className="flex flex-col gap-0.5 pb-4">
+            {filtered.map((s) => {
+              const folder = s.folderId
+                ? folders.find((f) => f.id === s.folderId)
+                : null
+              return (
+                <SessionItem
+                  key={s.id}
+                  session={s}
+                  activeId={activeId}
+                  folderLabel={folder?.name}
+                />
+              )
+            })}
+            {filtered.length === 0 && (
+              <li className="px-3 py-6 text-center text-xs text-muted-foreground">
+                No sessions match &ldquo;{query}&rdquo;.
+              </li>
+            )}
+          </ul>
+        ) : (
+          // Grouped view with drag-and-drop
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex flex-col gap-1 pb-4">
+              {folders.map((folder) => (
+                <FolderSection
+                  key={folder.id}
+                  folder={folder}
+                  sessions={sessions.filter((s) => s.folderId === folder.id)}
+                  activeId={activeId}
+                  isPendingRename={pendingFolderId === folder.id}
+                  onRenameDone={() => setPendingFolderId(null)}
+                  onFolderDelete={(id) =>
+                    setFolders((prev) => prev.filter((f) => f.id !== id))
+                  }
+                />
+              ))}
+              <RootSection
+                sessions={sessions.filter((s) => s.folderId === null)}
+                activeId={activeId}
+                hasFolders={folders.length > 0}
+              />
+            </div>
+            <DragOverlay dropAnimation={null}>
+              {draggedSession ? (
+                <SessionItemDragOverlay session={draggedSession} />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
       </ScrollArea>
     </aside>
   )
 }
 
+// ---------------------------------------------------------------------------
+// Folder section — droppable header + collapsible list
+// ---------------------------------------------------------------------------
+
+function FolderSection({
+  folder,
+  sessions,
+  activeId,
+  isPendingRename,
+  onRenameDone,
+  onFolderDelete,
+}: {
+  folder: SidebarFolder
+  sessions: SidebarSession[]
+  activeId: string | null
+  isPendingRename: boolean
+  onRenameDone: () => void
+  onFolderDelete: (id: string) => void
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: folder.id })
+
+  const [open, setOpen] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(folder.name)
+  const [optimisticName, setOptimisticName] = useState(folder.name)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [, startTransition] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Enter rename mode immediately after folder is created
+  useEffect(() => {
+    if (isPendingRename && !editing) setEditing(true)
+  }, [isPendingRename, editing])
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select()
+  }, [editing])
+
+  useEffect(() => {
+    setOptimisticName(folder.name)
+    setName(folder.name)
+  }, [folder.name])
+
+  function commitRename() {
+    const next = name.trim()
+    setEditing(false)
+    onRenameDone()
+    if (!next || next === optimisticName) {
+      setName(optimisticName)
+      return
+    }
+    setOptimisticName(next)
+    startTransition(async () => {
+      try {
+        await renameFolderAction(folder.id, next)
+      } catch {
+        setOptimisticName(folder.name)
+        setName(folder.name)
+      }
+    })
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') { e.preventDefault(); commitRename() }
+    else if (e.key === 'Escape') {
+      e.preventDefault()
+      setName(optimisticName)
+      setEditing(false)
+      onRenameDone()
+    }
+  }
+
+  function handleDelete() {
+    setDeleting(true)
+    startTransition(async () => {
+      try {
+        await deleteFolderAction(folder.id)
+        onFolderDelete(folder.id)
+      } catch {
+        setDeleting(false)
+        setConfirmOpen(false)
+      }
+    })
+  }
+
+  return (
+    <div>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'group flex items-center gap-1 rounded-xl px-1.5 py-1 transition-colors',
+          isOver && 'bg-primary/10 ring-1 ring-primary/30',
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+          aria-expanded={open}
+        >
+          <ChevronRight
+            className={cn(
+              'size-3 shrink-0 text-muted-foreground/60 transition-transform',
+              open && 'rotate-90',
+            )}
+          />
+          {open ? (
+            <FolderOpen className="size-3.5 shrink-0 text-muted-foreground" />
+          ) : (
+            <Folder className="size-3.5 shrink-0 text-muted-foreground" />
+          )}
+          {editing ? (
+            <input
+              ref={inputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Folder name"
+              className="min-w-0 flex-1 rounded bg-background/60 px-1 py-0 text-xs outline-none ring-1 ring-primary/50"
+            />
+          ) : (
+            <span className="truncate text-xs font-medium text-muted-foreground">
+              {optimisticName}
+            </span>
+          )}
+          <span className="ml-auto shrink-0 pr-1 text-[10px] text-muted-foreground/50">
+            {sessions.length}
+          </span>
+        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              title="Folder options"
+              aria-label="Folder options"
+              className="inline-flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-background/60 hover:text-foreground group-hover:opacity-100 data-[state=open]:opacity-100"
+            >
+              <MoreHorizontal className="size-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem
+              onSelect={(e) => { e.preventDefault(); setEditing(true) }}
+            >
+              <Pencil className="size-4" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={(e) => { e.preventDefault(); setConfirmOpen(true) }}
+            >
+              <FolderX className="size-4" />
+              Delete folder
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {open && (
+        <ul className="flex flex-col gap-0.5 pl-2">
+          {sessions.map((s) => (
+            <SessionItem key={s.id} session={s} activeId={activeId} />
+          ))}
+          {sessions.length === 0 && (
+            <li className="px-3 py-2 text-[11px] italic text-muted-foreground/50">
+              Drag sessions here
+            </li>
+          )}
+        </ul>
+      )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete &ldquo;{optimisticName}&rdquo;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              The folder will be removed. Sessions inside will be moved to
+              Unfiled — they won&apos;t be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete() }}
+              disabled={deleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                'Delete folder'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Root (unfiled) drop zone + session list
+// ---------------------------------------------------------------------------
+
+function RootSection({
+  sessions,
+  activeId,
+  hasFolders,
+}: {
+  sessions: SidebarSession[]
+  activeId: string | null
+  hasFolders: boolean
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: 'root' })
+
+  return (
+    <div ref={setNodeRef}>
+      {hasFolders ? (
+        <div
+          className={cn(
+            'flex items-center gap-1.5 rounded-xl px-2 py-1 transition-colors',
+            isOver && 'bg-primary/10 ring-1 ring-primary/30',
+          )}
+        >
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Unfiled
+          </span>
+        </div>
+      ) : (
+        <p className="px-2 pb-1 pt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          Recent sessions
+        </p>
+      )}
+      <ul
+        className={cn(
+          'flex flex-col gap-0.5',
+          hasFolders && 'pl-2',
+        )}
+      >
+        {sessions.map((s) => (
+          <SessionItem key={s.id} session={s} activeId={activeId} />
+        ))}
+        {sessions.length === 0 && hasFolders && (
+          <li className="px-3 py-2 text-[11px] italic text-muted-foreground/50">
+            No unfiled sessions
+          </li>
+        )}
+      </ul>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Draggable session item
+// ---------------------------------------------------------------------------
+
 function SessionItem({
   session,
   activeId,
+  folderLabel,
 }: {
   session: SidebarSession
   activeId: string | null
+  folderLabel?: string
 }) {
+  const { attributes, listeners, setNodeRef, isDragging, transform } =
+    useDraggable({ id: session.id })
+
   const router = useRouter()
   const isActive = session.id === activeId
   const dot = STATUS_DOT[session.viewState]
@@ -196,10 +607,8 @@ function SessionItem({
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      commit()
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Enter') { e.preventDefault(); commit() }
+    else if (e.key === 'Escape') {
       e.preventDefault()
       setValue(optimisticTitle)
       setEditing(false)
@@ -211,8 +620,6 @@ function SessionItem({
     startTransition(async () => {
       try {
         await deleteSessionAction(session.id)
-        // If we deleted the open session, fall back to the default session;
-        // otherwise just refresh the list in place.
         if (isActive) router.push('/studio')
         else router.refresh()
       } catch {
@@ -222,11 +629,24 @@ function SessionItem({
     })
   }
 
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), opacity: 0.4 }
+    : undefined
+
   const meta = (
     <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
       <span>{session.dateLabel}</span>
       <span className="size-0.5 rounded-full bg-muted-foreground/50" />
       <span>{session.words.toLocaleString()} words</span>
+      {folderLabel && (
+        <>
+          <span className="size-0.5 rounded-full bg-muted-foreground/50" />
+          <span className="flex items-center gap-0.5">
+            <Folder className="size-2.5" />
+            {folderLabel}
+          </span>
+        </>
+      )}
     </div>
   )
 
@@ -255,13 +675,20 @@ function SessionItem({
   }
 
   return (
-    <li className="group relative">
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={cn('group relative touch-none', isDragging && 'cursor-grabbing')}
+      {...attributes}
+      {...listeners}
+    >
       <Link
         href={`/studio?s=${session.id}`}
         className={cn(
           'flex w-full flex-col gap-1.5 rounded-2xl px-3 py-2.5 text-left transition-colors',
           isActive ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/60',
         )}
+        draggable={false}
       >
         <div className="flex items-center justify-between gap-2">
           <span
@@ -294,10 +721,8 @@ function SessionItem({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+            onPointerDown={(e) => e.stopPropagation()}
             title="Session options"
             aria-label="Session options"
             className={cn(
@@ -309,20 +734,14 @@ function SessionItem({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              setEditing(true)
-            }}
+            onSelect={(e) => { e.preventDefault(); setEditing(true) }}
           >
             <Pencil className="size-4" />
             Rename
           </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
-            onSelect={(e) => {
-              e.preventDefault()
-              setConfirmOpen(true)
-            }}
+            onSelect={(e) => { e.preventDefault(); setConfirmOpen(true) }}
           >
             <Trash2 className="size-4" />
             Delete
@@ -335,17 +754,14 @@ function SessionItem({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this session?</AlertDialogTitle>
             <AlertDialogDescription>
-              “{optimisticTitle}” and its analysis will be permanently deleted.
-              This can’t be undone.
+              &ldquo;{optimisticTitle}&rdquo; and its analysis will be
+              permanently deleted. This can&apos;t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                handleDelete()
-              }}
+              onClick={(e) => { e.preventDefault(); handleDelete() }}
               disabled={deleting}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
@@ -359,5 +775,28 @@ function SessionItem({
         </AlertDialogContent>
       </AlertDialog>
     </li>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Drag overlay ghost card shown while dragging
+// ---------------------------------------------------------------------------
+
+function SessionItemDragOverlay({ session }: { session: SidebarSession }) {
+  const dot = STATUS_DOT[session.viewState]
+  return (
+    <div className="flex w-64 cursor-grabbing flex-col gap-1.5 rounded-2xl bg-sidebar-accent px-3 py-2.5 shadow-lg ring-1 ring-primary/30">
+      <div className="flex items-center gap-1.5 truncate text-sm font-medium text-sidebar-accent-foreground">
+        {dot && (
+          <span className={cn('size-1.5 shrink-0 rounded-full', dot)} aria-hidden />
+        )}
+        <span className="truncate">{session.title}</span>
+      </div>
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <span>{session.dateLabel}</span>
+        <span className="size-0.5 rounded-full bg-muted-foreground/50" />
+        <span>{session.words.toLocaleString()} words</span>
+      </div>
+    </div>
   )
 }

@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { getCurrentUser } from '@/lib/auth/server'
-import { ensureUser, listSessions, getSession } from '@/lib/db/queries'
+import { ensureUser, listSessions, listFolders, getSession } from '@/lib/db/queries'
 import { seedSessionForUser } from '@/lib/db/seed'
 import { Workspace } from '@/components/studio/workspace'
 import type {
   SidebarSession,
+  SidebarFolder,
   ActiveSession,
   StudioAnalysis,
 } from '@/components/studio/types'
@@ -27,6 +28,8 @@ export default async function Page({
     list = await listSessions(user.uid)
   }
 
+  const folderList = await listFolders(user.uid)
+
   const { s } = await searchParams
   const activeId = s && list.some((x) => x.id === s) ? s : list[0]?.id
   const detail = activeId ? await getSession(user.uid, activeId) : null
@@ -34,10 +37,16 @@ export default async function Page({
   const sidebar: SidebarSession[] = list.map((x) => ({
     id: x.id,
     title: x.title,
+    folderId: x.folderId,
     dateLabel: formatDistanceToNow(x.updatedAt, { addSuffix: true }),
     words: x.wordCount,
     spark: x.spark,
     viewState: x.viewState,
+  }))
+
+  const folders: SidebarFolder[] = folderList.map((f) => ({
+    id: f.id,
+    name: f.name,
   }))
 
   const active: ActiveSession | null = detail
@@ -55,6 +64,7 @@ export default async function Page({
     <Workspace
       key={active?.id ?? 'empty'}
       sessions={sidebar}
+      folders={folders}
       activeId={activeId ?? null}
       active={active}
     />

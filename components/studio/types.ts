@@ -37,9 +37,15 @@ export type StudioAnalysis = {
   dialogueIssues: DialogueIssue[] | null
 }
 
+export type SidebarFolder = {
+  id: string
+  name: string
+}
+
 export type SidebarSession = {
   id: string
   title: string
+  folderId: string | null
   dateLabel: string
   words: number
   spark: number[] | null
