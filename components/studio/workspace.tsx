@@ -27,6 +27,15 @@ export function Workspace({
   const [collapsed, setCollapsed] = useState(false)
   const [lens, setLens] = useState<Lens>('none')
   const [activeBlock, setActiveBlock] = useState<number | null>(null)
+  // Separate from activeBlock — only updated when a chart drives the selection.
+  // The editor watches this to scroll; paragraph hovers never touch it so they
+  // don't cause the editor to scroll to a paragraph the user is already on.
+  const [chartActiveBlock, setChartActiveBlock] = useState<number | null>(null)
+
+  function handleChartHover(b: number | null) {
+    setActiveBlock(b)
+    setChartActiveBlock(b)
+  }
   const [mode, setMode] = useState<'read' | 'edit'>(
     active?.viewState === 'fresh' ? 'read' : 'edit',
   )
@@ -139,14 +148,15 @@ export function Workspace({
               lens={lens}
               onLensChange={setLens}
               activeBlock={activeBlock}
+              scrollToBlock={chartActiveBlock}
               onHoverBlock={setActiveBlock}
             />
             <InsightsPanel
               viewState={effectiveViewState}
               analysis={active.analysis}
               activeBlock={activeBlock}
-              onHoverBlock={setActiveBlock}
-              onSelectBlock={setActiveBlock}
+              onHoverBlock={handleChartHover}
+              onSelectBlock={handleChartHover}
             />
           </>
         ) : (

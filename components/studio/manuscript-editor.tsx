@@ -39,6 +39,7 @@ export function ManuscriptEditor({
   lens,
   onLensChange,
   activeBlock,
+  scrollToBlock,
   onHoverBlock,
 }: {
   sessionId: string
@@ -54,6 +55,7 @@ export function ManuscriptEditor({
   lens: Lens
   onLensChange: (l: Lens) => void
   activeBlock: number | null
+  scrollToBlock: number | null
   onHoverBlock: (b: number | null) => void
 }) {
   const refs = useRef<Record<number, HTMLParagraphElement | null>>({})
@@ -63,13 +65,15 @@ export function ManuscriptEditor({
   const canRead = viewState === 'fresh' && !!paragraphs?.length
   const effectiveMode = canRead ? mode : 'edit'
 
+  // Only scroll when the chart drove the selection (scrollToBlock), not when
+  // the user is already hovering the paragraph they want to see.
   useEffect(() => {
-    if (effectiveMode !== 'read' || activeBlock == null) return
-    refs.current[activeBlock]?.scrollIntoView({
+    if (effectiveMode !== 'read' || scrollToBlock == null) return
+    refs.current[scrollToBlock]?.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
     })
-  }, [activeBlock, effectiveMode])
+  }, [scrollToBlock, effectiveMode])
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-background">
