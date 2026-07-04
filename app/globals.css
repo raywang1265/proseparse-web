@@ -41,6 +41,10 @@
   --hl-dialogue-foreground: oklch(0.34 0.06 220);
   --hl-tag: oklch(0.62 0.18 295 / 0.3);
   --hl-tag-foreground: oklch(0.4 0.12 295);
+  --hl-sentence-long: oklch(0.7 0.18 30 / 0.35);
+  --hl-sentence-long-foreground: oklch(0.36 0.12 30);
+  --hl-sentence-short: oklch(0.72 0.14 145 / 0.35);
+  --hl-sentence-short-foreground: oklch(0.34 0.1 145);
 
   --radius: 0.95rem;
 
@@ -90,6 +94,10 @@
   --hl-dialogue-foreground: oklch(0.88 0.1 195);
   --hl-tag: oklch(0.7 0.18 295 / 0.3);
   --hl-tag-foreground: oklch(0.85 0.12 295);
+  --hl-sentence-long: oklch(0.7 0.19 30 / 0.32);
+  --hl-sentence-long-foreground: oklch(0.88 0.12 32);
+  --hl-sentence-short: oklch(0.75 0.16 145 / 0.32);
+  --hl-sentence-short-foreground: oklch(0.88 0.1 145);
 
   --sidebar: oklch(0.18 0.022 255);
   --sidebar-foreground: oklch(0.92 0.012 250);
@@ -137,6 +145,10 @@
   --color-hl-dialogue-foreground: var(--hl-dialogue-foreground);
   --color-hl-tag: var(--hl-tag);
   --color-hl-tag-foreground: var(--hl-tag-foreground);
+  --color-hl-sentence-long: var(--hl-sentence-long);
+  --color-hl-sentence-long-foreground: var(--hl-sentence-long-foreground);
+  --color-hl-sentence-short: var(--hl-sentence-short);
+  --color-hl-sentence-short-foreground: var(--hl-sentence-short-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

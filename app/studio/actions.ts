@@ -12,7 +12,10 @@ import {
   renameFolder,
   deleteFolder,
   moveSession,
+  upsertAnalysis,
+  getSession,
 } from '@/lib/db/queries'
+import { analyzeManuscript } from '@/lib/analysis/analyze'
 
 async function requireUser() {
   const user = await getCurrentUser()
@@ -88,5 +91,41 @@ export async function moveSessionAction(
   const user = await requireUser()
   const ok = await moveSession(user.uid, sessionId, folderId)
   if (!ok) throw new Error('Session not found or folder not accessible')
+  revalidatePath('/studio')
+}
+
+// Runs the heuristic analysis pass (dialogue + sentence length) and persists
+// the result. The Re-analyze button calls this, then refreshes the page so
+// the server re-renders with a fresh viewState.
+export async function analyzeSessionAction(sessionId: string) {
+  const user = await requireUser()
+  const detail = await getSession(user.uid, sessionId)
+  if (!detail) throw new Error('Session not found')
+
+  const text = detail.session.manuscriptText
+  const payload = analyzeManuscript(text)
+
+  const ok = await upsertAnalysis(user.uid, sessionId, {
+    paragraphs: payload.paragraphs,
+    spark: null,
+    voiceSplit: null,
+    sentenceLengths: payload.sentenceLengths,
+    styleMetrics: payload.styleMetrics,
+    dialogueTags: payload.dialogueTags,
+    tension: null,
+    pacing: null,
+    exposition: null,
+    sensory: null,
+    sensoryAdvice: null,
+    characters: null,
+    voiceMatrix: null,
+    dialogueIssues: null,
+    readabilityGrade: null,
+    avgSentenceWords: payload.avgSentenceWords,
+    adverbPct: null,
+    passivePct: null,
+  })
+
+  if (!ok) throw new Error('Failed to save analysis')
   revalidatePath('/studio')
 }

@@ -1,14 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { PanelLeftOpen, Sparkles } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { PanelLeftOpen, Sparkles, Loader2 } from 'lucide-react'
 import { SessionSidebar } from './session-sidebar'
 import { ManuscriptEditor, type Lens } from './manuscript-editor'
 import { InsightsPanel } from './insights-panel'
 import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
 import { Button } from '@/components/ui/button'
-import { saveSessionTextAction } from '@/app/studio/actions'
+import { saveSessionTextAction, analyzeSessionAction } from '@/app/studio/actions'
 import type { SidebarSession, SidebarFolder, ActiveSession, ViewState } from './types'
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -24,6 +25,8 @@ export function Workspace({
   activeId: string | null
   active: ActiveSession | null
 }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [collapsed, setCollapsed] = useState(false)
   const [lens, setLens] = useState<Lens>('none')
   const [activeBlock, setActiveBlock] = useState<number | null>(null)
@@ -79,10 +82,19 @@ export function Workspace({
   }
 
   const canReanalyze =
+    !isPending &&
     active != null &&
     (effectiveViewState === 'stale' ||
       effectiveViewState === 'unanalyzed' ||
       effectiveViewState === 'error')
+
+  function handleReanalyze() {
+    if (!active) return
+    startTransition(async () => {
+      await analyzeSessionAction(active.id)
+      router.refresh()
+    })
+  }
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
@@ -109,15 +121,22 @@ export function Workspace({
           <Button
             size="sm"
             disabled={!canReanalyze}
+            onClick={handleReanalyze}
             title={
-              canReanalyze
-                ? 'Re-analyze this draft'
-                : 'Analysis is up to date'
+              isPending
+                ? 'Analyzing…'
+                : canReanalyze
+                  ? 'Re-analyze this draft'
+                  : 'Analysis is up to date'
             }
             className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <Sparkles className="size-3.5" />
-            Re-analyze
+            {isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="size-3.5" />
+            )}
+            {isPending ? 'Analyzing…' : 'Re-analyze'}
           </Button>
           <ThemeToggle />
           <UserMenu />

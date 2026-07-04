@@ -3,7 +3,7 @@ import 'server-only'
 import { and, desc, eq } from 'drizzle-orm'
 import { db } from './index'
 import { users, sessions, folders, analysisResults } from './schema'
-import type { DbSession, DbFolder, AnalysisResult } from './schema'
+import type { DbSession, DbFolder, AnalysisResult, NewAnalysisResult } from './schema'
 import { hashContent, countWords } from './hash'
 import { getViewState, type AnalysisViewState } from './staleness'
 import type { ServerUser } from '@/lib/auth/server'
@@ -262,4 +262,68 @@ export async function deleteSession(
     .returning({ id: sessions.id })
 
   return result.length > 0
+}
+
+// ---------------------------------------------------------------------------
+// Analysis upsert
+// ---------------------------------------------------------------------------
+
+// Persists a completed analysis for a session. Ownership is verified before
+// writing. The analyzedTextHash is always taken from the session's current
+// contentHash so the result starts "fresh". Sets session.status = 'done'.
+export async function upsertAnalysis(
+  userId: string,
+  sessionId: string,
+  fields: Omit<NewAnalysisResult, 'id' | 'sessionId' | 'analyzedTextHash' | 'createdAt'>,
+): Promise<boolean> {
+  // Verify ownership and grab the current content hash in one query.
+  const [session] = await db
+    .select({ contentHash: sessions.contentHash })
+    .from(sessions)
+    .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+    .limit(1)
+
+  if (!session) return false
+
+  const values: NewAnalysisResult = {
+    id: crypto.randomUUID(),
+    sessionId,
+    analyzedTextHash: session.contentHash,
+    ...fields,
+  }
+
+  await db
+    .insert(analysisResults)
+    .values(values)
+    .onConflictDoUpdate({
+      target: analysisResults.sessionId,
+      set: {
+        analyzedTextHash: values.analyzedTextHash,
+        paragraphs: values.paragraphs,
+        spark: values.spark,
+        voiceSplit: values.voiceSplit,
+        sentenceLengths: values.sentenceLengths,
+        styleMetrics: values.styleMetrics,
+        dialogueTags: values.dialogueTags,
+        tension: values.tension,
+        pacing: values.pacing,
+        exposition: values.exposition,
+        sensory: values.sensory,
+        sensoryAdvice: values.sensoryAdvice,
+        characters: values.characters,
+        voiceMatrix: values.voiceMatrix,
+        dialogueIssues: values.dialogueIssues,
+        readabilityGrade: values.readabilityGrade,
+        avgSentenceWords: values.avgSentenceWords,
+        adverbPct: values.adverbPct,
+        passivePct: values.passivePct,
+      },
+    })
+
+  await db
+    .update(sessions)
+    .set({ status: 'done' })
+    .where(eq(sessions.id, sessionId))
+
+  return true
 }

@@ -6,6 +6,7 @@ import {
   HIGHLIGHT_LEGEND,
   type HighlightKind,
   type Paragraph,
+  type SentenceBucket,
 } from '@/lib/analysis-data'
 import { cn } from '@/lib/utils'
 import { EditableTitle } from './editable-title'
@@ -19,7 +20,13 @@ const HL_BG: Record<HighlightKind, string> = {
   tag: 'bg-hl-tag text-hl-tag-foreground',
 }
 
-export type Lens = HighlightKind | 'none'
+const SENTENCE_BG: Record<SentenceBucket, string | null> = {
+  short: 'bg-hl-sentence-short text-hl-sentence-short-foreground',
+  medium: null,
+  long: 'bg-hl-sentence-long text-hl-sentence-long-foreground',
+}
+
+export type Lens = HighlightKind | 'none' | 'sentence-length'
 
 function countWords(text: string): number {
   const t = text.trim()
@@ -111,6 +118,12 @@ export function ManuscriptEditor({
                   onClick={() => onLensChange(l.kind)}
                 />
               ))}
+              <LensChip
+                label="Sentence length"
+                swatch="bg-hl-sentence-long"
+                active={lens === 'sentence-length'}
+                onClick={() => onLensChange('sentence-length')}
+              />
             </div>
           )}
 
@@ -156,20 +169,35 @@ export function ManuscriptEditor({
                     isActive && 'bg-accent/60 ring-1 ring-primary/20',
                   )}
                 >
-                  {p.segments.map((seg, i) => {
-                    const highlighted = lens !== 'none' && seg.kind === lens
-                    return (
-                      <span
-                        key={i}
-                        className={cn(
-                          highlighted && 'rounded-md px-1 py-0.5',
-                          highlighted && HL_BG[seg.kind as HighlightKind],
-                        )}
-                      >
-                        {seg.text}
-                      </span>
-                    )
-                  })}
+                  {lens === 'sentence-length' && p.sentences?.length
+                    ? p.sentences.map((s, i) => {
+                        const bg = SENTENCE_BG[s.bucket]
+                        return (
+                          <span
+                            key={i}
+                            className={cn(bg && 'rounded-md px-1 py-0.5', bg ?? undefined)}
+                          >
+                            {s.text}{' '}
+                          </span>
+                        )
+                      })
+                    : p.segments.map((seg, i) => {
+                        const highlighted =
+                          lens !== 'none' &&
+                          lens !== 'sentence-length' &&
+                          seg.kind === lens
+                        return (
+                          <span
+                            key={i}
+                            className={cn(
+                              highlighted && 'rounded-md px-1 py-0.5',
+                              highlighted && HL_BG[seg.kind as HighlightKind],
+                            )}
+                          >
+                            {seg.text}
+                          </span>
+                        )
+                      })}
                 </p>
               )
             })}

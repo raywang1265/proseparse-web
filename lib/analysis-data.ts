@@ -10,11 +10,22 @@ export type Segment = {
   kind?: HighlightKind
 }
 
+export type SentenceBucket = 'short' | 'medium' | 'long'
+
+export type SentenceSpan = {
+  text: string
+  words: number
+  bucket: SentenceBucket
+}
+
 export type Paragraph = {
   id: string
   /** index used to tether charts <-> text */
   block: number
   segments: Segment[]
+  /** Sentence-level spans for the sentence-length lens. Populated by heuristic
+   *  parsing; absent on legacy seeded data until re-analyzed. */
+  sentences?: SentenceSpan[]
   /** -1 (despair) .. 1 (elation) */
   valence: number
   /** 0 (calm) .. 1 (frantic) */
