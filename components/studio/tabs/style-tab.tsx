@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   Cell,
   Pie,
   PieChart,
@@ -85,38 +85,19 @@ export function StyleTab({ analysis }: { analysis: StudioAnalysis }) {
       >
         <div className="h-32">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+            <BarChart
               data={SENTENCE_LENGTHS}
               margin={{ top: 6, right: 4, bottom: 0, left: 4 }}
+              barCategoryGap="10%"
             >
-              <defs>
-                <linearGradient id="sentGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor="var(--color-chart-1)"
-                    stopOpacity={0.5}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor="var(--color-chart-1)"
-                    stopOpacity={0.02}
-                  />
-                </linearGradient>
-              </defs>
               <XAxis
                 dataKey="length"
                 tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
               />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke="var(--color-chart-1)"
-                strokeWidth={2}
-                fill="url(#sentGrad)"
-              />
-            </AreaChart>
+              <Bar dataKey="count" radius={[2, 2, 0, 0]} fill="var(--color-chart-1)" />
+            </BarChart>
           </ResponsiveContainer>
         </div>
         <p className="mt-1 text-center text-[11px] text-muted-foreground">

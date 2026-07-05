@@ -6,7 +6,7 @@ import type { Segment, SentenceBucket } from '@/lib/analysis-data'
 
 export function splitParagraphs(text: string): string[] {
   return text
-    .split(/\n{2,}/)
+    .split(/\r?\n+/)
     .map((p) => p.trim())
     .filter(Boolean)
 }
