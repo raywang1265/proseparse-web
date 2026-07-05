@@ -9,7 +9,11 @@ import {
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
-import type { Paragraph, ExpositionPoint } from '@/lib/analysis-data'
+import type {
+  Paragraph,
+  ExpositionPoint,
+  VoiceTrendPoint,
+} from '@/lib/analysis-data'
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -163,6 +167,9 @@ export const analysisResults = pgTable(
 
     // ---- Style tab ----------------------------------------------------
     voiceSplit: jsonb('voice_split').$type<VoiceSplit>(),
+    // Per-paragraph active/passive voice counts (drives the voice trend line
+    // chart). Distinct from voiceSplit, which is a single document-wide ratio.
+    voiceTrend: jsonb('voice_trend').$type<VoiceTrendPoint[]>(),
     sentenceLengths: jsonb('sentence_lengths').$type<SentenceLengths>(),
     styleMetrics: jsonb('style_metrics').$type<StyleMetric[]>(),
     dialogueTags: jsonb('dialogue_tags').$type<DialogueTag[]>(),

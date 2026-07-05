@@ -3,11 +3,20 @@
 // All copy is placeholder and meant to be replaced by real ML output.
 // ---------------------------------------------------------------------------
 
-export type HighlightKind = 'sensory' | 'passive' | 'dialogue' | 'tag'
+export type HighlightKind = 'sensory' | 'passive' | 'active' | 'dialogue' | 'tag'
 
 export type Segment = {
   text: string
   kind?: HighlightKind
+}
+
+// Per-paragraph active/passive voice counts, for the voice trend line chart.
+// `block` mirrors Paragraph.block so the chart can tether to the editor.
+export type VoiceTrendPoint = {
+  block: number
+  label: string
+  active: number
+  passive: number
 }
 
 export type SentenceBucket = 'short' | 'medium' | 'long'
@@ -361,7 +370,6 @@ export const HIGHLIGHT_LEGEND: {
   swatch: string
 }[] = [
   { kind: 'sensory', label: 'Sensory detail', swatch: 'bg-chart-2' },
-  { kind: 'passive', label: 'Passive voice', swatch: 'bg-chart-4' },
   { kind: 'dialogue', label: 'Dialogue', swatch: 'bg-chart-1' },
   { kind: 'tag', label: 'Dialogue tags', swatch: 'bg-chart-3' },
 ]

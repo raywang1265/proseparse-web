@@ -302,6 +302,7 @@ export async function upsertAnalysis(
         paragraphs: values.paragraphs,
         spark: values.spark,
         voiceSplit: values.voiceSplit,
+        voiceTrend: values.voiceTrend,
         sentenceLengths: values.sentenceLengths,
         styleMetrics: values.styleMetrics,
         dialogueTags: values.dialogueTags,

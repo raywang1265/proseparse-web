@@ -16,6 +16,7 @@ import type { SaveState } from './workspace'
 const HL_BG: Record<HighlightKind, string> = {
   sensory: 'bg-hl-sensory text-hl-sensory-foreground',
   passive: 'bg-hl-passive text-hl-passive-foreground',
+  active: 'bg-hl-active text-hl-active-foreground',
   dialogue: 'bg-hl-dialogue text-hl-dialogue-foreground',
   tag: 'bg-hl-tag text-hl-tag-foreground',
 }
@@ -26,7 +27,10 @@ const SENTENCE_BG: Record<SentenceBucket, string | null> = {
   long: 'bg-hl-sentence-long text-hl-sentence-long-foreground',
 }
 
-export type Lens = HighlightKind | 'none' | 'sentence-length'
+// Kinds highlighted together by the combined "Voice" lens.
+const VOICE_KINDS: HighlightKind[] = ['active', 'passive']
+
+export type Lens = HighlightKind | 'none' | 'sentence-length' | 'voice'
 
 function countWords(text: string): number {
   const t = text.trim()
@@ -119,6 +123,12 @@ export function ManuscriptEditor({
                 />
               ))}
               <LensChip
+                label="Voice"
+                swatch="bg-hl-active"
+                active={lens === 'voice'}
+                onClick={() => onLensChange('voice')}
+              />
+              <LensChip
                 label="Sentence length"
                 swatch="bg-hl-sentence-long"
                 active={lens === 'sentence-length'}
@@ -183,9 +193,11 @@ export function ManuscriptEditor({
                       })
                     : p.segments.map((seg, i) => {
                         const highlighted =
-                          lens !== 'none' &&
-                          lens !== 'sentence-length' &&
-                          seg.kind === lens
+                          lens === 'voice'
+                            ? !!seg.kind && VOICE_KINDS.includes(seg.kind)
+                            : lens !== 'none' &&
+                              lens !== 'sentence-length' &&
+                              seg.kind === lens
                         return (
                           <span
                             key={i}

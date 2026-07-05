@@ -3,20 +3,36 @@
 import {
   Bar,
   BarChart,
-  Cell,
-  Pie,
-  PieChart,
+  Line,
+  LineChart,
   ResponsiveContainer,
   XAxis,
+  YAxis,
 } from 'recharts'
 import { InsightCard } from '../insight-card'
 import type { StudioAnalysis } from '../types'
+import type { Paragraph, VoiceTrendPoint } from '@/lib/analysis-data'
+
+// Fallback: derive per-paragraph active/passive counts from segment kinds when
+// the backend hasn't supplied a dedicated voiceTrend series yet.
+function deriveVoiceTrend(paragraphs: Paragraph[]): VoiceTrendPoint[] {
+  return paragraphs.map((p) => {
+    let active = 0
+    let passive = 0
+    for (const seg of p.segments) {
+      if (seg.kind === 'active') active++
+      else if (seg.kind === 'passive') passive++
+    }
+    return { block: p.block, label: `¶${p.block + 1}`, active, passive }
+  })
+}
 
 export function StyleTab({ analysis }: { analysis: StudioAnalysis }) {
-  const VOICE_SPLIT = analysis.voiceSplit ?? []
   const SENTENCE_LENGTHS = analysis.sentenceLengths ?? []
   const STYLE_METRICS = analysis.styleMetrics ?? []
   const DIALOGUE_TAGS = analysis.dialogueTags ?? []
+  const VOICE_TREND =
+    analysis.voiceTrend ?? deriveVoiceTrend(analysis.paragraphs ?? [])
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,42 +56,54 @@ export function StyleTab({ analysis }: { analysis: StudioAnalysis }) {
       </div>
 
       <InsightCard
-        title="Voice composition"
-        subtitle="Active vs. passive constructions"
+        title="Active vs. passive voice"
+        subtitle="Instances per paragraph"
       >
-        <div className="flex items-center gap-4">
-          <div className="h-28 w-28 shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={VOICE_SPLIT}
-                  dataKey="value"
-                  innerRadius={32}
-                  outerRadius={52}
-                  paddingAngle={2}
-                  strokeWidth={0}
-                >
-                  {VOICE_SPLIT.map((s) => (
-                    <Cell key={s.name} fill={s.fill} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <ul className="flex-1 space-y-2">
-            {VOICE_SPLIT.map((s) => (
-              <li key={s.name} className="flex items-center gap-2 text-sm">
-                <span
-                  className="size-2.5 rounded-full"
-                  style={{ background: s.fill }}
-                />
-                <span className="text-muted-foreground">{s.name}</span>
-                <span className="ml-auto font-mono font-medium tabular-nums">
-                  {s.value}%
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div className="h-36">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={VOICE_TREND}
+              margin={{ top: 6, right: 6, bottom: 0, left: 0 }}
+            >
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                allowDecimals={false}
+                width={22}
+                tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="active"
+                stroke="var(--color-chart-5)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="passive"
+                stroke="var(--color-chart-4)"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-1 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-chart-5" />
+            Active
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-chart-4" />
+            Passive
+          </span>
         </div>
       </InsightCard>
 

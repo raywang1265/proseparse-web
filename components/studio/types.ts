@@ -3,6 +3,7 @@ import type {
   ExpositionPoint,
   CharacterPair,
   DialogueIssue,
+  VoiceTrendPoint,
 } from '@/lib/analysis-data'
 
 // Derived view state shared across the studio UI. Mirrors lib/db/staleness.ts
@@ -20,6 +21,7 @@ export type StudioAnalysis = {
   paragraphs: Paragraph[] | null
   spark: number[] | null
   voiceSplit: { name: string; value: number; fill: string }[] | null
+  voiceTrend: VoiceTrendPoint[] | null
   sentenceLengths: { length: number; count: number }[] | null
   styleMetrics: { label: string; value: string; unit: string }[] | null
   dialogueTags: { tag: string; count: number }[] | null

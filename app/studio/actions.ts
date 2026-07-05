@@ -16,6 +16,7 @@ import {
   getSession,
 } from '@/lib/db/queries'
 import { analyzeManuscript } from '@/lib/analysis/analyze'
+import { analyzeManuscriptRemote, hasRemoteBackend } from '@/lib/analysis/batch'
 
 async function requireUser() {
   const user = await getCurrentUser()
@@ -103,12 +104,18 @@ export async function analyzeSessionAction(sessionId: string) {
   if (!detail) throw new Error('Session not found')
 
   const text = detail.session.manuscriptText
-  const payload = analyzeManuscript(text)
+  // Use the batched FastAPI backend when configured (scales to large
+  // manuscripts by fanning paragraphs out into batches); otherwise fall back
+  // to the in-process heuristic analyzer.
+  const payload = hasRemoteBackend()
+    ? await analyzeManuscriptRemote(text, { sessionId })
+    : analyzeManuscript(text)
 
   const ok = await upsertAnalysis(user.uid, sessionId, {
     paragraphs: payload.paragraphs,
     spark: null,
-    voiceSplit: null,
+    voiceSplit: payload.voiceSplit,
+    voiceTrend: payload.voiceTrend,
     sentenceLengths: payload.sentenceLengths,
     styleMetrics: payload.styleMetrics,
     dialogueTags: payload.dialogueTags,
@@ -123,7 +130,7 @@ export async function analyzeSessionAction(sessionId: string) {
     readabilityGrade: null,
     avgSentenceWords: payload.avgSentenceWords,
     adverbPct: null,
-    passivePct: null,
+    passivePct: payload.passivePct,
   })
 
   if (!ok) throw new Error('Failed to save analysis')

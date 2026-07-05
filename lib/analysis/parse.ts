@@ -1,4 +1,4 @@
-import type { Segment, SentenceBucket } from '@/lib/analysis-data'
+import type { HighlightKind, Segment, SentenceBucket } from '@/lib/analysis-data'
 
 // ---------------------------------------------------------------------------
 // Paragraph splitting
@@ -97,56 +97,150 @@ export function splitSentences(text: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// Dialogue segment parsing
+// Offset spans -> segments
 //
-// Single-pass pairing of opening and closing quotation marks (straight " and
-// curly \u201c/\u201d). Within a paragraph, each open quote starts a dialogue
-// segment; the matching close quote ends it. Unmatched quotes (e.g. a straight
-// " acting as both open and close in alternating style) are handled by
-// toggling state on every straight-quote encounter.
+// The analysis backend returns char offsets (per-paragraph-relative) for
+// passive constructions and dialogue-attribution tags. Dialogue quote spans are
+// detected locally. `buildSegments` merges any set of marked [start, end) spans
+// with the paragraph text into an ordered, non-overlapping Segment[] whose
+// concatenated text equals the original paragraph exactly.
 // ---------------------------------------------------------------------------
 
-export function parseDialogueSegments(text: string): Segment[] {
+export type MarkedSpan = { start: number; end: number; kind: HighlightKind }
+
+// Lower number = higher priority when two spans start at the same index.
+const KIND_PRIORITY: Record<HighlightKind, number> = {
+  dialogue: 0,
+  tag: 1,
+  passive: 2,
+  active: 3,
+  sensory: 4,
+}
+
+export function buildSegments(text: string, spans: MarkedSpan[]): Segment[] {
+  const len = text.length
+
+  const cleaned = spans
+    .map((s) => ({
+      start: Math.max(0, Math.min(s.start, len)),
+      end: Math.max(0, Math.min(s.end, len)),
+      kind: s.kind,
+    }))
+    .filter((s) => s.end > s.start)
+    .sort(
+      (a, b) =>
+        a.start - b.start ||
+        KIND_PRIORITY[a.kind] - KIND_PRIORITY[b.kind] ||
+        b.end - a.end,
+    )
+
   const segments: Segment[] = []
-  let buf = ''
+  let cursor = 0
+
+  for (const s of cleaned) {
+    // Skip spans that overlap one already emitted (first/higher-priority wins).
+    if (s.start < cursor) continue
+    if (s.start > cursor) segments.push({ text: text.slice(cursor, s.start) })
+    segments.push({ text: text.slice(s.start, s.end), kind: s.kind })
+    cursor = s.end
+  }
+
+  if (cursor < len) segments.push({ text: text.slice(cursor) })
+
+  return segments.filter((seg) => seg.text.length > 0)
+}
+
+// ---------------------------------------------------------------------------
+// Dialogue quote spans (detected locally — the backend does not return these)
+//
+// Single-pass pairing of opening and closing quotation marks (straight " and
+// curly \u201c/\u201d). Each returned span [start, end) covers the quotation
+// marks and the text between them.
+// ---------------------------------------------------------------------------
+
+export function findDialogueSpans(text: string): Array<[number, number]> {
+  const spans: Array<[number, number]> = []
   let inDialogue = false
+  let start = 0
 
   for (let i = 0; i < text.length; i++) {
     const ch = text[i]
-
     if (ch === '\u201c') {
-      // Curly open quote — always starts dialogue
-      if (buf) segments.push(inDialogue ? { text: buf, kind: 'dialogue' } : { text: buf })
-      buf = ch
-      inDialogue = true
-    } else if (ch === '\u201d') {
-      // Curly close quote — always ends dialogue
-      buf += ch
-      segments.push({ text: buf, kind: 'dialogue' })
-      buf = ''
-      inDialogue = false
-    } else if (ch === '"') {
-      // Straight quote — toggle
       if (!inDialogue) {
-        if (buf) segments.push({ text: buf })
-        buf = ch
         inDialogue = true
-      } else {
-        buf += ch
-        segments.push({ text: buf, kind: 'dialogue' })
-        buf = ''
+        start = i
+      }
+    } else if (ch === '\u201d') {
+      if (inDialogue) {
+        spans.push([start, i + 1])
         inDialogue = false
       }
-    } else {
-      buf += ch
+    } else if (ch === '"') {
+      if (!inDialogue) {
+        inDialogue = true
+        start = i
+      } else {
+        spans.push([start, i + 1])
+        inDialogue = false
+      }
     }
   }
 
-  if (buf) {
-    segments.push(inDialogue ? { text: buf, kind: 'dialogue' } : { text: buf })
-  }
+  if (inDialogue) spans.push([start, text.length])
+  return spans
+}
 
-  return segments.filter((s) => s.text.length > 0)
+// Convenience: local dialogue-only segmentation (used by the in-process
+// fallback analyzer and anywhere a quick quote split is needed).
+export function parseDialogueSegments(text: string): Segment[] {
+  const spans: MarkedSpan[] = findDialogueSpans(text).map(([start, end]) => ({
+    start,
+    end,
+    kind: 'dialogue',
+  }))
+  return buildSegments(text, spans)
+}
+
+// ---------------------------------------------------------------------------
+// Attribution tags (dialogue verbs following a closing quote)
+//
+// Used locally by the in-process fallback analyzer. When the remote backend is
+// active, tag spans come from the backend instead.
+// ---------------------------------------------------------------------------
+
+export const ATTRIBUTION_VERBS = new Set([
+  'said', 'say', 'says',
+  'asked', 'ask',
+  'replied', 'reply', 'replies',
+  'answered', 'answer',
+  'whispered', 'whisper',
+  'muttered', 'mutter',
+  'snapped', 'snap',
+  'shouted', 'shout',
+  'called', 'call',
+  'cried', 'cry',
+  'offered', 'offer',
+  'added', 'add',
+  'continued', 'continue',
+  'insisted', 'insist',
+  'laughed', 'laugh',
+  'sighed', 'sigh',
+  'began', 'begin',
+  'demanded', 'demand',
+])
+
+// Matches a closing quote, optional comma/space, then a word. Non-backtracking.
+const ATTRIBUTION_RE = /[\u201d"]\s*,?\s*(\w+)/g
+
+export function findAttributionTagSpans(text: string): Array<[number, number]> {
+  const spans: Array<[number, number]> = []
+  for (const m of text.matchAll(ATTRIBUTION_RE)) {
+    const verb = m[1]?.toLowerCase() ?? ''
+    if (!ATTRIBUTION_VERBS.has(verb)) continue
+    const wordStart = (m.index ?? 0) + m[0].length - m[1].length
+    spans.push([wordStart, wordStart + m[1].length])
+  }
+  return spans
 }
 
 // ---------------------------------------------------------------------------

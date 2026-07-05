@@ -76,6 +76,7 @@ function toStudioAnalysis(a: AnalysisResult): StudioAnalysis {
     paragraphs: a.paragraphs ?? null,
     spark: a.spark ?? null,
     voiceSplit: a.voiceSplit ?? null,
+    voiceTrend: a.voiceTrend ?? null,
     sentenceLengths: a.sentenceLengths ?? null,
     styleMetrics: a.styleMetrics ?? null,
     dialogueTags: a.dialogueTags ?? null,
