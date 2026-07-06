@@ -27,6 +27,7 @@ export function Workspace({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const [lens, setLens] = useState<Lens>('none')
   const [activeBlock, setActiveBlock] = useState<number | null>(null)
@@ -90,9 +91,16 @@ export function Workspace({
 
   function handleReanalyze() {
     if (!active) return
+    setAnalyzeError(null)
     startTransition(async () => {
-      await analyzeSessionAction(active.id)
-      router.refresh()
+      try {
+        await analyzeSessionAction(active.id)
+        router.refresh()
+      } catch (err) {
+        setAnalyzeError(
+          err instanceof Error ? err.message : 'Analysis failed. Please try again.',
+        )
+      }
     })
   }
 
@@ -118,6 +126,14 @@ export function Workspace({
           </span>
         </div>
         <div className="flex items-center gap-1.5">
+          {analyzeError && (
+            <span
+              className="max-w-56 truncate text-xs text-destructive"
+              title={analyzeError}
+            >
+              {analyzeError}
+            </span>
+          )}
           <Button
             size="sm"
             disabled={!canReanalyze}
