@@ -15,6 +15,13 @@ import {
   type AnalysisPayload,
   type VoiceCounts,
 } from './analyze'
+import {
+  ANALYZE_CONCURRENCY,
+  analysisAuthHeaders,
+  mapPool,
+  warmAnalysisBackend,
+  withRetry,
+} from './remote'
 
 // Max paragraphs sent to the analysis backend in a single request. Tail batches
 // may be smaller. Kept small so each request is bounded regardless of manuscript
@@ -91,20 +98,14 @@ function toParagraph(block: number, text: string, result: AnalyzedParagraphResul
   return { id: `p${block + 1}`, block, segments, sentences, valence: 0, arousal: 0 }
 }
 
-async function fetchBatch(
+async function fetchBatchOnce(
   baseUrl: string,
   req: AnalyzeBatchRequest,
 ): Promise<AnalyzeBatchResponse> {
   const res = await fetch(`${baseUrl.replace(/\/$/, '')}/analyze`, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(process.env.ANALYSIS_API_KEY
-        ? { authorization: `Bearer ${process.env.ANALYSIS_API_KEY}` }
-        : {}),
-    },
+    headers: analysisAuthHeaders(),
     body: JSON.stringify(req),
-    // Analysis is not cacheable and can be slow; opt out of Next's fetch cache.
     cache: 'no-store',
   })
 
@@ -118,15 +119,24 @@ async function fetchBatch(
   return (await res.json()) as AnalyzeBatchResponse
 }
 
+async function fetchBatch(
+  baseUrl: string,
+  req: AnalyzeBatchRequest,
+): Promise<AnalyzeBatchResponse> {
+  return withRetry(`POST /analyze batch ${req.batchIndex}`, () =>
+    fetchBatchOnce(baseUrl, req),
+  )
+}
+
 // True when a remote analysis backend is configured. When false, callers should
 // fall back to the in-process `analyzeManuscript`.
 export function hasRemoteBackend(): boolean {
   return !!process.env.ANALYSIS_API_URL
 }
 
-// Batched, remote analysis: split into paragraphs, fan out into batches of up
-// to BATCH_SIZE, call the backend in parallel, reassemble in document order,
-// then run the shared document-level aggregation locally.
+// Batched, remote analysis: split into paragraphs, run a small concurrency pool
+// against Cloud Run (not all-at-once), reassemble in document order, then run
+// the shared document-level aggregation locally.
 export async function analyzeManuscriptRemote(
   text: string,
   opts: { sessionId?: string } = {},
@@ -141,12 +151,12 @@ export async function analyzeManuscriptRemote(
 
   if (inputs.length === 0) return aggregateAnalysis([])
 
+  await warmAnalysisBackend(baseUrl)
+
   const batches = chunk(inputs, BATCH_SIZE)
 
-  const responses = await Promise.all(
-    batches.map((paragraphs, batchIndex) =>
-      fetchBatch(baseUrl, { sessionId: opts.sessionId, batchIndex, paragraphs }),
-    ),
+  const responses = await mapPool(batches, ANALYZE_CONCURRENCY, (paragraphs, batchIndex) =>
+    fetchBatch(baseUrl, { sessionId: opts.sessionId, batchIndex, paragraphs }),
   )
 
   const textByBlock = new Map(inputs.map((i) => [i.block, i.text]))

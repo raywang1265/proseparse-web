@@ -318,49 +318,250 @@ export const SENSORY = [
 export type CharacterPair = {
   a: string
   b: string
-  similarity: number // 0..1, higher = voices too alike
+  /** Combined voice similarity: 0.5·sem + 0.4·style + 0.1·vocab. Higher = voices too alike. */
+  similarity: number
+  semSim?: number
+  styleSim?: number
+  vocabSim?: number
+}
+
+export type VoiceProfile = {
+  name: string
+  wordCount: number
+  sentenceCount: number
+  avgSentenceLength: number
+  avgWordLength: number
+  lexicalDiversity: number
+  contractionDensity: number
+  questionRate: number
+  exclamationRate: number
+  commaDensity: number
+  dashEllipsisRate: number
+  /** Fixed-order POS rates for the style radar chart. */
+  posRates: { tag: string; rate: number }[]
+  punctuation: { mark: string; per1k: number }[]
 }
 
 export const CHARACTERS = ['Mara', 'Thomas', 'Eli', 'The Keeper']
 
 export const VOICE_MATRIX: CharacterPair[] = [
-  { a: 'Mara', b: 'Thomas', similarity: 0.34 },
-  { a: 'Mara', b: 'Eli', similarity: 0.71 },
-  { a: 'Mara', b: 'The Keeper', similarity: 0.19 },
-  { a: 'Thomas', b: 'Eli', similarity: 0.58 },
-  { a: 'Thomas', b: 'The Keeper', similarity: 0.27 },
-  { a: 'Eli', b: 'The Keeper', similarity: 0.83 },
+  {
+    a: 'Mara',
+    b: 'Thomas',
+    similarity: 0.34,
+    semSim: 0.28,
+    styleSim: 0.42,
+    vocabSim: 0.31,
+  },
+  {
+    a: 'Mara',
+    b: 'Eli',
+    similarity: 0.71,
+    semSim: 0.68,
+    styleSim: 0.76,
+    vocabSim: 0.62,
+  },
+  {
+    a: 'Mara',
+    b: 'The Keeper',
+    similarity: 0.19,
+    semSim: 0.15,
+    styleSim: 0.24,
+    vocabSim: 0.18,
+  },
+  {
+    a: 'Thomas',
+    b: 'Eli',
+    similarity: 0.58,
+    semSim: 0.55,
+    styleSim: 0.61,
+    vocabSim: 0.52,
+  },
+  {
+    a: 'Thomas',
+    b: 'The Keeper',
+    similarity: 0.27,
+    semSim: 0.22,
+    styleSim: 0.33,
+    vocabSim: 0.25,
+  },
+  {
+    a: 'Eli',
+    b: 'The Keeper',
+    similarity: 0.83,
+    semSim: 0.79,
+    styleSim: 0.88,
+    vocabSim: 0.81,
+  },
+]
+
+export const VOICE_PROFILES: VoiceProfile[] = [
+  {
+    name: 'Mara',
+    wordCount: 412,
+    sentenceCount: 38,
+    avgSentenceLength: 10.8,
+    avgWordLength: 4.2,
+    lexicalDiversity: 0.48,
+    contractionDensity: 0.06,
+    questionRate: 0.18,
+    exclamationRate: 0.05,
+    commaDensity: 0.08,
+    dashEllipsisRate: 0.11,
+    posRates: [
+      { tag: 'PRON', rate: 0.14 },
+      { tag: 'NOUN', rate: 0.18 },
+      { tag: 'VERB', rate: 0.16 },
+      { tag: 'ADJ', rate: 0.07 },
+      { tag: 'ADV', rate: 0.09 },
+      { tag: 'AUX', rate: 0.06 },
+      { tag: 'INTJ', rate: 0.02 },
+    ],
+    punctuation: [
+      { mark: '.', per1k: 92 },
+      { mark: ',', per1k: 80 },
+      { mark: '?', per1k: 18 },
+      { mark: '!', per1k: 5 },
+    ],
+  },
+  {
+    name: 'Thomas',
+    wordCount: 356,
+    sentenceCount: 29,
+    avgSentenceLength: 12.3,
+    avgWordLength: 4.6,
+    lexicalDiversity: 0.52,
+    contractionDensity: 0.03,
+    questionRate: 0.07,
+    exclamationRate: 0.02,
+    commaDensity: 0.11,
+    dashEllipsisRate: 0.04,
+    posRates: [
+      { tag: 'PRON', rate: 0.1 },
+      { tag: 'NOUN', rate: 0.22 },
+      { tag: 'VERB', rate: 0.14 },
+      { tag: 'ADJ', rate: 0.09 },
+      { tag: 'ADV', rate: 0.06 },
+      { tag: 'AUX', rate: 0.05 },
+      { tag: 'INTJ', rate: 0.01 },
+    ],
+    punctuation: [
+      { mark: '.', per1k: 81 },
+      { mark: ',', per1k: 110 },
+      { mark: '?', per1k: 7 },
+      { mark: '!', per1k: 2 },
+    ],
+  },
+  {
+    name: 'Eli',
+    wordCount: 298,
+    sentenceCount: 34,
+    avgSentenceLength: 8.8,
+    avgWordLength: 3.9,
+    lexicalDiversity: 0.41,
+    contractionDensity: 0.09,
+    questionRate: 0.21,
+    exclamationRate: 0.12,
+    commaDensity: 0.05,
+    dashEllipsisRate: 0.15,
+    posRates: [
+      { tag: 'PRON', rate: 0.18 },
+      { tag: 'NOUN', rate: 0.14 },
+      { tag: 'VERB', rate: 0.17 },
+      { tag: 'ADJ', rate: 0.05 },
+      { tag: 'ADV', rate: 0.11 },
+      { tag: 'AUX', rate: 0.07 },
+      { tag: 'INTJ', rate: 0.04 },
+    ],
+    punctuation: [
+      { mark: '.', per1k: 114 },
+      { mark: ',', per1k: 50 },
+      { mark: '?', per1k: 21 },
+      { mark: '!', per1k: 12 },
+    ],
+  },
+  {
+    name: 'The Keeper',
+    wordCount: 267,
+    sentenceCount: 31,
+    avgSentenceLength: 8.6,
+    avgWordLength: 4.0,
+    lexicalDiversity: 0.39,
+    contractionDensity: 0.08,
+    questionRate: 0.19,
+    exclamationRate: 0.1,
+    commaDensity: 0.06,
+    dashEllipsisRate: 0.14,
+    posRates: [
+      { tag: 'PRON', rate: 0.17 },
+      { tag: 'NOUN', rate: 0.15 },
+      { tag: 'VERB', rate: 0.16 },
+      { tag: 'ADJ', rate: 0.06 },
+      { tag: 'ADV', rate: 0.1 },
+      { tag: 'AUX', rate: 0.07 },
+      { tag: 'INTJ', rate: 0.05 },
+    ],
+    punctuation: [
+      { mark: '.', per1k: 116 },
+      { mark: ',', per1k: 60 },
+      { mark: '?', per1k: 19 },
+      { mark: '!', per1k: 10 },
+    ],
+  },
 ]
 
 export type DialogueIssue = {
   id: string
   severity: 'high' | 'medium' | 'low'
-  block: number
+  /** Paragraph index when tethered; null for document-level voice notes. */
+  block: number | null
   title: string
   detail: string
+}
+
+/** Paragraph-local dialogue quote from POST /voice (UTF-16 offsets). */
+export type DialogueAttributionSpan = {
+  speaker: string
+  block: number
+  start: number
+  end: number
+}
+
+/** User-facing labels for spaCy POS tags shown in the Voice tab. */
+export const POS_LABELS: Record<string, string> = {
+  PRON: 'Pronoun',
+  NOUN: 'Noun',
+  PROPN: 'Proper noun',
+  VERB: 'Verb',
+  ADJ: 'Adjective',
+  ADV: 'Adverb',
+  AUX: 'Auxiliary',
+  INTJ: 'Interjection',
 }
 
 export const DIALOGUE_ISSUES: DialogueIssue[] = [
   {
     id: 'd1',
     severity: 'high',
-    block: 5,
-    title: 'Ambiguous speaker',
-    detail: '"I came to tell you the truth" — pronoun "he" could refer to Thomas or Eli.',
+    block: null,
+    title: 'Voices too alike',
+    detail:
+      'Eli and The Keeper score 0.83 combined — similar topics and diction may make them hard to tell apart.',
   },
   {
     id: 'd2',
     severity: 'medium',
-    block: 8,
-    title: 'Unclear antecedent',
-    detail: '"they both" — three characters were active in the prior paragraph.',
+    block: null,
+    title: 'Voices too alike',
+    detail: 'Mara and Eli score 0.71 — overlapping casual diction and question habits.',
   },
   {
     id: 'd3',
     severity: 'low',
-    block: 1,
-    title: 'Filter word',
-    detail: '"listened to" distances the reader from Mara\'s direct experience.',
+    block: null,
+    title: 'Unattributed dialogue',
+    detail:
+      'A small share of dialogue could not be attributed. Clearer speech tags help speaker resolution.',
   },
 ]
 

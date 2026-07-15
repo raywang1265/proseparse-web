@@ -17,6 +17,8 @@ import {
 } from '@/lib/db/queries'
 import { analyzeManuscript } from '@/lib/analysis/analyze'
 import { analyzeManuscriptRemote, hasRemoteBackend } from '@/lib/analysis/batch'
+import { analyzeVoicesRemote } from '@/lib/analysis/voice'
+import type { VoiceAnalysisPayload } from '@/lib/analysis/voice'
 
 async function requireUser() {
   const user = await getCurrentUser()
@@ -111,6 +113,17 @@ export async function analyzeSessionAction(sessionId: string) {
     ? await analyzeManuscriptRemote(text, { sessionId })
     : analyzeManuscript(text)
 
+  // Voice similarity is heavier (MiniLM). Soft-fail so a cold start / timeout
+  // does not block the main style analysis from persisting.
+  let voice: VoiceAnalysisPayload | null = null
+  if (hasRemoteBackend()) {
+    try {
+      voice = await analyzeVoicesRemote(text, { sessionId })
+    } catch (err) {
+      console.error('voice analysis failed', err)
+    }
+  }
+
   const ok = await upsertAnalysis(user.uid, sessionId, {
     paragraphs: payload.paragraphs,
     spark: null,
@@ -124,9 +137,11 @@ export async function analyzeSessionAction(sessionId: string) {
     exposition: null,
     sensory: null,
     sensoryAdvice: null,
-    characters: null,
-    voiceMatrix: null,
-    dialogueIssues: null,
+    characters: voice?.characters ?? null,
+    voiceMatrix: voice?.voiceMatrix ?? null,
+    voiceProfiles: voice?.voiceProfiles ?? null,
+    dialogueIssues: voice?.dialogueIssues ?? null,
+    speakerSpans: voice?.speakerSpans ?? null,
     readabilityGrade: null,
     avgSentenceWords: payload.avgSentenceWords,
     adverbPct: null,

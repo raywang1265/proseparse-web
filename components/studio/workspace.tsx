@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { PanelLeftOpen, Sparkles, Loader2 } from 'lucide-react'
 import { SessionSidebar } from './session-sidebar'
-import { ManuscriptEditor, type Lens } from './manuscript-editor'
+import { ManuscriptEditor, type Lens, type SpeakerLens } from './manuscript-editor'
 import { InsightsPanel } from './insights-panel'
 import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
@@ -30,6 +30,7 @@ export function Workspace({
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const [lens, setLens] = useState<Lens>('none')
+  const [speakerLens, setSpeakerLens] = useState<SpeakerLens>('off')
   const [activeBlock, setActiveBlock] = useState<number | null>(null)
   // Separate from activeBlock — only updated when a chart drives the selection.
   // The editor watches this to scroll; paragraph hovers never touch it so they
@@ -182,6 +183,9 @@ export function Workspace({
               paragraphs={active.analysis?.paragraphs ?? null}
               lens={lens}
               onLensChange={setLens}
+              speakerLens={speakerLens}
+              onSpeakerLensChange={setSpeakerLens}
+              speakerSpans={active.analysis?.speakerSpans ?? null}
               activeBlock={activeBlock}
               scrollToBlock={chartActiveBlock}
               onHoverBlock={setActiveBlock}

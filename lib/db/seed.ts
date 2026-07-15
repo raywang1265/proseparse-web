@@ -16,6 +16,7 @@ import {
   SENSORY,
   CHARACTERS,
   VOICE_MATRIX,
+  VOICE_PROFILES,
   DIALOGUE_ISSUES,
 } from '@/lib/analysis-data'
 
@@ -63,7 +64,9 @@ export async function seedSessionForUser(userId: string): Promise<string> {
       'Taste and smell are underused. Consider grounding the lighthouse interior with an olfactory detail to deepen immersion.',
     characters: CHARACTERS,
     voiceMatrix: VOICE_MATRIX,
+    voiceProfiles: VOICE_PROFILES,
     dialogueIssues: DIALOGUE_ISSUES,
+    speakerSpans: null,
     readabilityGrade: 7,
     avgSentenceWords: 14.2,
     adverbPct: 3.1,

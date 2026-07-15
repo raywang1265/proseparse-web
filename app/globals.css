@@ -47,6 +47,8 @@
   --hl-sentence-long-foreground: oklch(0.36 0.12 30);
   --hl-sentence-short: oklch(0.72 0.14 145 / 0.35);
   --hl-sentence-short-foreground: oklch(0.34 0.1 145);
+  --hl-unknown: oklch(0.7 0.18 40 / 0.4);
+  --hl-unknown-foreground: oklch(0.36 0.1 40);
 
   --radius: 0.95rem;
 
@@ -102,6 +104,8 @@
   --hl-sentence-long-foreground: oklch(0.88 0.12 32);
   --hl-sentence-short: oklch(0.75 0.16 145 / 0.32);
   --hl-sentence-short-foreground: oklch(0.88 0.1 145);
+  --hl-unknown: oklch(0.72 0.18 40 / 0.35);
+  --hl-unknown-foreground: oklch(0.9 0.1 45);
 
   --sidebar: oklch(0.18 0.022 255);
   --sidebar-foreground: oklch(0.92 0.012 250);
@@ -155,6 +159,8 @@
   --color-hl-sentence-long-foreground: var(--hl-sentence-long-foreground);
   --color-hl-sentence-short: var(--hl-sentence-short);
   --color-hl-sentence-short-foreground: var(--hl-sentence-short-foreground);
+  --color-hl-unknown: var(--hl-unknown);
+  --color-hl-unknown-foreground: var(--hl-unknown-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

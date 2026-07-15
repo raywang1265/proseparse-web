@@ -135,13 +135,41 @@ type PacingPoint = { section: string; action: number; description: number; dialo
 type SensoryScore = { sense: string; score: number }[]
 
 // Character / voice output
-type CharacterPair = { a: string; b: string; similarity: number }
+type CharacterPair = {
+  a: string
+  b: string
+  similarity: number
+  semSim?: number
+  styleSim?: number
+  vocabSim?: number
+}
+type VoiceProfile = {
+  name: string
+  wordCount: number
+  sentenceCount: number
+  avgSentenceLength: number
+  avgWordLength: number
+  lexicalDiversity: number
+  contractionDensity: number
+  questionRate: number
+  exclamationRate: number
+  commaDensity: number
+  dashEllipsisRate: number
+  posRates: { tag: string; rate: number }[]
+  punctuation: { mark: string; per1k: number }[]
+}
 type DialogueIssue = {
   id: string
   severity: 'high' | 'medium' | 'low'
-  block: number
+  block: number | null
   title: string
   detail: string
+}
+type DialogueAttributionSpan = {
+  speaker: string
+  block: number
+  start: number
+  end: number
 }
 
 export const analysisResults = pgTable(
@@ -186,7 +214,10 @@ export const analysisResults = pgTable(
     // ---- Character / voice tab ----------------------------------------
     characters: jsonb('characters').$type<string[]>(),
     voiceMatrix: jsonb('voice_matrix').$type<CharacterPair[]>(),
+    voiceProfiles: jsonb('voice_profiles').$type<VoiceProfile[]>(),
     dialogueIssues: jsonb('dialogue_issues').$type<DialogueIssue[]>(),
+    // Per-quote speaker attribution from POST /voice (includes UNKNOWN).
+    speakerSpans: jsonb('speaker_spans').$type<DialogueAttributionSpan[]>(),
 
     // ---- Summary stats ------------------------------------------------
     readabilityGrade: real('readability_grade'),
