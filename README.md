@@ -1,12 +1,41 @@
 # ProseParse
 
 A writing-analysis studio for novelists and editors. Drop in a chapter and
-ProseParse sits beside your words, mapping their tension, pacing, voice,
-exposition, and sensory texture with ML — visualized alongside the manuscript.
+ProseParse sits beside your words, mapping tension, pacing, voice, exposition,
+and sensory texture — visualized alongside the manuscript.
 
-> **Status:** early development. The UI is built out; the backend is being
-> wired up. See [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) for the
-> full roadmap and the current placeholder inventory.
+> **Status:** active development. The web app is functional locally with auth,
+> persistence, and analysis wired up. Not deployed to production yet.
+
+## Related repos
+
+| Repo | Role |
+| --- | --- |
+| **proseparse-web** (this repo) | Next.js frontend, auth, database, and orchestration |
+| [**proseparse-backend**](https://github.com/raywang1265/proseparse-backend) | FastAPI ML service (voice/passive detection, character similarity) deployed on Cloud Run |
+
+## What's working
+
+- **UI** — landing page, login, and the analysis studio (manuscript editor,
+insight panels, session sidebar, folders).
+- **Authentication** — Firebase email/password + Google sign-in, httpOnly session
+  cookies, and route protection for `/studio`.
+- **Database** — Neon Postgres via Drizzle ORM: users, sessions, folders, and
+  analysis results. Autosave, staleness tracking, and re-analyze flow.
+- **Analysis** — when `ANALYSIS_API_URL` is set, the app calls the
+  [proseparse-backend](https://github.com/raywang1265/proseparse-backend) service
+  for batched style analysis (`POST /analyze`) and character/voice similarity
+  (`POST /voice`). Without it, a local heuristic fallback runs instead.
+  Style metrics (voice split, sentence lengths, dialogue tags) and character
+  voice profiles are persisted today.
+
+## What's next
+
+- **Deploy the web app** — Vercel (or similar) once env config is settled.
+- **Expand ML coverage** — tension/pacing, exposition, sensory scoring, and
+  readability metrics (schema and UI tabs exist; results are not populated yet).
+- **Production hardening** — error handling, observability, and cold-start UX
+  for the analysis backend.
 
 ## Tech stack
 
@@ -14,56 +43,44 @@ exposition, and sensory texture with ML — visualized alongside the manuscript.
 | --- | --- |
 | Framework | Next.js (App Router) + React 19, TypeScript |
 | UI | Tailwind CSS v4, shadcn/ui, Recharts, lucide-react |
-| Authentication | **Firebase Auth** (web SDK client-side, Admin SDK server-side) |
-| Database | **Neon** (serverless Postgres) — users, sessions, manuscript text, analysis results |
-| ML analysis | **Hugging Face** Inference API / Endpoints |
+| Authentication | Firebase Auth (web SDK client-side, Admin SDK server-side) |
+| Database | Neon (serverless Postgres) + Drizzle ORM |
+| ML analysis | [proseparse-backend](https://github.com/raywang1265/proseparse-backend) (FastAPI on Cloud Run) |
 
-## Architecture & boundaries
+## Architecture
 
 ProseParse keeps a strict line between what runs in the browser and what runs
-on the server. Respect it when adding code:
+on the server:
 
 - **Client-side:** the Firebase **web** SDK only (sign-in, sign-up, ID tokens).
-  Its config values live in `NEXT_PUBLIC_*` env vars and are not secrets.
-- **Server-side only** (API routes / server actions): **Neon**, **Hugging
-  Face**, and the **Firebase Admin** SDK. Their credentials must **never** be
-  prefixed with `NEXT_PUBLIC_` and must never reach the browser.
-
-### Authentication flow (implemented)
+  Config values live in `NEXT_PUBLIC_*` env vars and are not secrets.
+- **Server-side only** (server actions / API routes): **Neon**, the **analysis
+  backend**, and the **Firebase Admin** SDK. Their credentials must never be
+  prefixed with `NEXT_PUBLIC_` or reach the browser.
 
 ```
-User ──sign in (email/pw or Google)──▶ Firebase web SDK ──ID token──▶
-  POST /api/auth/session ──▶ Admin SDK verifies + mints httpOnly session cookie
+User ──sign in──▶ Firebase web SDK ──ID token──▶ POST /api/auth/session
   │
   ▼
-middleware.ts gates /studio on the session cookie; getCurrentUser() verifies
-it server-side. Sign-out clears the cookie (DELETE /api/auth/session).
+middleware.ts gates /studio on the session cookie
+  │
+  ▼
+Server actions ──▶ Neon (sessions, analysis results)
+                ──▶ proseparse-backend (batched ML, when configured)
 ```
 
-Relevant files:
-
-| File | Role |
-| --- | --- |
-| `lib/firebase/client.ts` | Web SDK init (`auth`, Google provider) |
-| `lib/firebase/admin.ts` | Admin SDK init (server only) |
-| `lib/auth/context.tsx` | `AuthProvider` + `useAuth()` (sign-in/up/out, Google, reset) |
-| `lib/auth/server.ts` | `getCurrentUser()` — verify session cookie server-side |
-| `lib/auth/constants.ts` | Shared cookie name / lifetime (Edge-safe) |
-| `app/api/auth/session/route.ts` | Mint (POST) / clear (DELETE) the session cookie |
-| `middleware.ts` | Route gate for `/studio` and `/login` |
-
 The TypeScript types in [`lib/analysis-data.ts`](./lib/analysis-data.ts) are
-the de-facto contract between the UI and the backend/ML layer. The server
-should return data in those same shapes.
+the contract between the UI and the analysis layer.
 
 ## Getting started
 
 ### Prerequisites
 
 - **Node.js** 18.18+ (20 LTS recommended)
-- **pnpm** (this repo uses a `pnpm-lock.yaml`) — `corepack enable pnpm` or `npm install -g pnpm`
-- A **Firebase** project (Email/Password and Google sign-in enabled), a
-  **Neon** database, and a **Hugging Face** access token.
+- **pnpm** — `corepack enable pnpm` or `npm install -g pnpm`
+- A **Firebase** project (Email/Password and Google sign-in enabled)
+- A **Neon** database
+- (Optional) A running [**proseparse-backend**](https://github.com/raywang1265/proseparse-backend) instance
 
 ### 1. Install dependencies
 
@@ -73,21 +90,41 @@ pnpm install
 
 ### 2. Configure environment variables
 
+Create `.env.local` in the project root:
+
 ```bash
-cp .env.example .env.local
+# Firebase (client — safe to expose)
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+
+# Firebase Admin (server only)
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+# Neon
+DATABASE_URL=
+DATABASE_URL_UNPOOLED=
+
+# Analysis backend (optional — omit to use local heuristic fallback)
+ANALYSIS_API_URL=
+ANALYSIS_API_KEY=
 ```
 
-`.env.local` is gitignored. See [`.env.example`](./.env.example) for a
-description of every variable. You'll need the Firebase web config
-(`NEXT_PUBLIC_FIREBASE_*`), the Firebase service-account credentials
-(`FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`),
-the Neon connection strings (`DATABASE_URL` / `DATABASE_URL_UNPOOLED`), and a
-`HUGGINGFACE_API_KEY`.
-
 In the Firebase console, enable **Authentication → Sign-in method → Email/Password**
-and **Google**, and add your dev domain (`localhost`) to the authorized domains.
+and **Google**, and add `localhost` to authorized domains.
 
-### 3. Run the dev server
+### 3. Push the database schema
+
+```bash
+pnpm db:push
+```
+
+### 4. Run the dev server
 
 ```bash
 pnpm dev
@@ -103,6 +140,9 @@ Open [http://localhost:3000](http://localhost:3000).
 | `pnpm build` | Production build |
 | `pnpm start` | Run the production build |
 | `pnpm lint` | Lint the project |
+| `pnpm db:push` | Push Drizzle schema to Neon |
+| `pnpm db:studio` | Open Drizzle Studio |
+| `pnpm db:generate` | Generate Drizzle migrations |
 
 ## Project structure
 
@@ -110,7 +150,7 @@ Open [http://localhost:3000](http://localhost:3000).
 app/
   page.tsx               # landing page
   login/                 # auth screen
-  studio/                # the analysis studio
+  studio/                # analysis studio (server actions)
   api/auth/session/      # session-cookie endpoint
 components/
   landing/               # marketing + auth UI
@@ -119,16 +159,8 @@ components/
 lib/
   firebase/              # client + admin SDK init
   auth/                  # context, server helpers, constants
-  analysis-data.ts       # data types + mock data (UI/backend contract)
+  db/                    # Drizzle schema, queries, staleness
+  analysis/              # local + remote analysis orchestration
+  analysis-data.ts       # data types (UI/analysis contract)
 middleware.ts            # route protection
 ```
-
-## Roadmap
-
-Tracked in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md):
-
-- **Phase 0 — Foundations:** env config, docs, server/client boundaries. ✅
-- **Phase 1 — Authentication (Firebase):** email/password + Google, session cookies, route protection. ✅
-- **Phase 2 — Database (Neon).**
-- **Phase 3 — ML analysis (Hugging Face).**
-- **Phase 4 — Polish & productionization.**
