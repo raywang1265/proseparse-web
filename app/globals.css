@@ -33,8 +33,19 @@
   --chart-5: oklch(0.68 0.16 155); /* forest green */
 
   /* Manuscript highlight overlays */
-  --hl-sensory: oklch(0.82 0.13 75 / 0.45);
-  --hl-sensory-foreground: oklch(0.32 0.06 60);
+  --hl-sight: oklch(0.82 0.13 75 / 0.45);
+  --hl-sight-foreground: oklch(0.32 0.06 60);
+  --hl-sound: oklch(0.72 0.16 295 / 0.38);
+  --hl-sound-foreground: oklch(0.36 0.12 295);
+  --hl-touch: oklch(0.72 0.12 195 / 0.38);
+  --hl-touch-foreground: oklch(0.32 0.08 210);
+  --hl-smell: oklch(0.72 0.14 145 / 0.38);
+  --hl-smell-foreground: oklch(0.32 0.1 145);
+  --hl-taste: oklch(0.72 0.16 18 / 0.38);
+  --hl-taste-foreground: oklch(0.36 0.12 18);
+  /* Alias: landing preview + legacy marks */
+  --hl-sensory: var(--hl-sight);
+  --hl-sensory-foreground: var(--hl-sight-foreground);
   --hl-passive: oklch(0.7 0.18 18 / 0.32);
   --hl-passive-foreground: oklch(0.38 0.12 18);
   --hl-active: oklch(0.7 0.15 155 / 0.35);
@@ -90,8 +101,18 @@
   --chart-4: oklch(0.7 0.19 18);   /* rose */
   --chart-5: oklch(0.78 0.16 155); /* forest green */
 
-  --hl-sensory: oklch(0.82 0.15 78 / 0.32);
-  --hl-sensory-foreground: oklch(0.9 0.12 80);
+  --hl-sight: oklch(0.82 0.15 78 / 0.32);
+  --hl-sight-foreground: oklch(0.9 0.12 80);
+  --hl-sound: oklch(0.72 0.18 295 / 0.32);
+  --hl-sound-foreground: oklch(0.88 0.12 295);
+  --hl-touch: oklch(0.78 0.14 195 / 0.3);
+  --hl-touch-foreground: oklch(0.88 0.1 195);
+  --hl-smell: oklch(0.75 0.16 145 / 0.32);
+  --hl-smell-foreground: oklch(0.88 0.1 145);
+  --hl-taste: oklch(0.72 0.18 18 / 0.32);
+  --hl-taste-foreground: oklch(0.9 0.12 22);
+  --hl-sensory: var(--hl-sight);
+  --hl-sensory-foreground: var(--hl-sight-foreground);
   --hl-passive: oklch(0.7 0.19 18 / 0.3);
   --hl-passive-foreground: oklch(0.85 0.12 22);
   --hl-active: oklch(0.75 0.16 155 / 0.3);
@@ -145,6 +166,16 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-hl-sight: var(--hl-sight);
+  --color-hl-sight-foreground: var(--hl-sight-foreground);
+  --color-hl-sound: var(--hl-sound);
+  --color-hl-sound-foreground: var(--hl-sound-foreground);
+  --color-hl-touch: var(--hl-touch);
+  --color-hl-touch-foreground: var(--hl-touch-foreground);
+  --color-hl-smell: var(--hl-smell);
+  --color-hl-smell-foreground: var(--hl-smell-foreground);
+  --color-hl-taste: var(--hl-taste);
+  --color-hl-taste-foreground: var(--hl-taste-foreground);
   --color-hl-sensory: var(--hl-sensory);
   --color-hl-sensory-foreground: var(--hl-sensory-foreground);
   --color-hl-passive: var(--hl-passive);
@@ -200,5 +231,38 @@
   }
   .scroll-thin::-webkit-scrollbar-track {
     background: transparent;
+  }
+
+  /* Sense overlays — declared explicitly so bg-hl-sight etc. exist even if
+     Tailwind has not yet picked up the new theme tokens. */
+  .bg-hl-sight {
+    background-color: var(--hl-sight);
+  }
+  .text-hl-sight-foreground {
+    color: var(--hl-sight-foreground);
+  }
+  .bg-hl-sound {
+    background-color: var(--hl-sound);
+  }
+  .text-hl-sound-foreground {
+    color: var(--hl-sound-foreground);
+  }
+  .bg-hl-touch {
+    background-color: var(--hl-touch);
+  }
+  .text-hl-touch-foreground {
+    color: var(--hl-touch-foreground);
+  }
+  .bg-hl-smell {
+    background-color: var(--hl-smell);
+  }
+  .text-hl-smell-foreground {
+    color: var(--hl-smell-foreground);
+  }
+  .bg-hl-taste {
+    background-color: var(--hl-taste);
+  }
+  .text-hl-taste-foreground {
+    color: var(--hl-taste-foreground);
   }
 }

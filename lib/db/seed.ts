@@ -14,6 +14,7 @@ import {
   PACING,
   EXPOSITION,
   SENSORY,
+  SENSORY_SPANS,
   CHARACTERS,
   VOICE_MATRIX,
   VOICE_PROFILES,
@@ -61,7 +62,8 @@ export async function seedSessionForUser(userId: string): Promise<string> {
     exposition: EXPOSITION,
     sensory: SENSORY,
     sensoryAdvice:
-      'Taste and smell are underused. Consider grounding the lighthouse interior with an olfactory detail to deepen immersion.',
+      'Taste is unused in this scene. Consider grounding a beat with a gustatory detail to balance the sensory palette.',
+    sensorySpans: SENSORY_SPANS,
     characters: CHARACTERS,
     voiceMatrix: VOICE_MATRIX,
     voiceProfiles: VOICE_PROFILES,

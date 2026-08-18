@@ -6,6 +6,8 @@ import type {
   VoiceTrendPoint,
   VoiceProfile,
   DialogueAttributionSpan,
+  SensoryHighlightSpan,
+  SensoryScore,
 } from '@/lib/analysis-data'
 
 // Derived view state shared across the studio UI. Mirrors lib/db/staleness.ts
@@ -34,8 +36,9 @@ export type StudioAnalysis = {
     | { section: string; action: number; description: number; dialogue: number }[]
     | null
   exposition: ExpositionPoint[] | null
-  sensory: { sense: string; score: number }[] | null
+  sensory: SensoryScore[] | null
   sensoryAdvice: string | null
+  sensorySpans: SensoryHighlightSpan[] | null
   characters: string[] | null
   voiceMatrix: CharacterPair[] | null
   voiceProfiles: VoiceProfile[] | null

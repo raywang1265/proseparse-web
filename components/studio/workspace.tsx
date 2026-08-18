@@ -186,6 +186,7 @@ export function Workspace({
               speakerLens={speakerLens}
               onSpeakerLensChange={setSpeakerLens}
               speakerSpans={active.analysis?.speakerSpans ?? null}
+              sensorySpans={active.analysis?.sensorySpans ?? null}
               activeBlock={activeBlock}
               scrollToBlock={chartActiveBlock}
               onHoverBlock={setActiveBlock}

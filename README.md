@@ -24,16 +24,16 @@ insight panels, session sidebar, folders).
   analysis results. Autosave, staleness tracking, and re-analyze flow.
 - **Analysis** — when `ANALYSIS_API_URL` is set, the app calls the
   [proseparse-backend](https://github.com/raywang1265/proseparse-backend) service
-  for batched style analysis (`POST /analyze`) and character/voice similarity
-  (`POST /voice`). Without it, a local heuristic fallback runs instead.
-  Style metrics (voice split, sentence lengths, dialogue tags) and character
-  voice profiles are persisted today.
+  for batched style analysis (`POST /analyze`), five-sense highlighting
+  (`POST /sensory`), and character/voice similarity (`POST /voice`). Without it,
+  a local heuristic fallback runs for style only. Style metrics, sensory cue
+  spans/scores, and character voice profiles are persisted today.
 
 ## What's next
 
 - **Deploy the web app** — Vercel (or similar) once env config is settled.
-- **Expand ML coverage** — tension/pacing, exposition, sensory scoring, and
-  readability metrics (schema and UI tabs exist; results are not populated yet).
+- **Expand ML coverage** — tension/pacing, exposition, and readability metrics
+  (schema and UI tabs exist; results are not populated yet).
 - **Production hardening** — error handling, observability, and cold-start UX
   for the analysis backend.
 

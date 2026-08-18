@@ -19,6 +19,8 @@ import { analyzeManuscript } from '@/lib/analysis/analyze'
 import { analyzeManuscriptRemote, hasRemoteBackend } from '@/lib/analysis/batch'
 import { analyzeVoicesRemote } from '@/lib/analysis/voice'
 import type { VoiceAnalysisPayload } from '@/lib/analysis/voice'
+import { analyzeSensoryRemote } from '@/lib/analysis/sensory'
+import type { SensoryAnalysisPayload } from '@/lib/analysis/sensory'
 
 async function requireUser() {
   const user = await getCurrentUser()
@@ -109,14 +111,27 @@ export async function analyzeSessionAction(sessionId: string) {
   // Use the batched FastAPI backend when configured (scales to large
   // manuscripts by fanning paragraphs out into batches); otherwise fall back
   // to the in-process heuristic analyzer.
-  const payload = hasRemoteBackend()
-    ? await analyzeManuscriptRemote(text, { sessionId })
-    : analyzeManuscript(text)
+  //
+  // /analyze and /sensory run in parallel. /voice runs after so two MiniLM
+  // endpoints do not contend on Cloud Run (concurrency=1 per instance).
+  const remote = hasRemoteBackend()
+
+  const [payload, sensory] = await Promise.all([
+    remote
+      ? analyzeManuscriptRemote(text, { sessionId })
+      : Promise.resolve(analyzeManuscript(text)),
+    remote
+      ? analyzeSensoryRemote(text, { sessionId }).catch((err) => {
+          console.error('sensory analysis failed', err)
+          return null as SensoryAnalysisPayload | null
+        })
+      : Promise.resolve(null as SensoryAnalysisPayload | null),
+  ])
 
   // Voice similarity is heavier (MiniLM). Soft-fail so a cold start / timeout
   // does not block the main style analysis from persisting.
   let voice: VoiceAnalysisPayload | null = null
-  if (hasRemoteBackend()) {
+  if (remote) {
     try {
       voice = await analyzeVoicesRemote(text, { sessionId })
     } catch (err) {
@@ -135,8 +150,9 @@ export async function analyzeSessionAction(sessionId: string) {
     tension: null,
     pacing: null,
     exposition: null,
-    sensory: null,
-    sensoryAdvice: null,
+    sensory: sensory?.scores ?? null,
+    sensoryAdvice: sensory?.advice ?? null,
+    sensorySpans: sensory?.spans ?? null,
     characters: voice?.characters ?? null,
     voiceMatrix: voice?.voiceMatrix ?? null,
     voiceProfiles: voice?.voiceProfiles ?? null,

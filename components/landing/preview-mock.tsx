@@ -21,7 +21,7 @@ export function PreviewMock() {
             <p className="font-serif text-[0.95rem] leading-[1.8] text-foreground/90">
               The lighthouse held its breath. She pressed her palm to the cold
               glass and{' '}
-              <mark className="rounded-md bg-hl-sensory px-1 py-0.5 text-hl-sensory-foreground">
+              <mark className="rounded-md bg-hl-taste px-1 py-0.5 text-hl-taste-foreground">
                 tasted salt on the wind
               </mark>
               , the kind that{' '}

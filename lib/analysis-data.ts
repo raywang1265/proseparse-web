@@ -3,7 +3,21 @@
 // All copy is placeholder and meant to be replaced by real ML output.
 // ---------------------------------------------------------------------------
 
-export type HighlightKind = 'sensory' | 'passive' | 'active' | 'dialogue' | 'tag'
+export type HighlightKind = 'passive' | 'active' | 'dialogue' | 'tag'
+
+/** Five senses returned by POST /sensory (highlight + radar keys). */
+export const SENSES = ['sight', 'sound', 'touch', 'smell', 'taste'] as const
+export type Sense = (typeof SENSES)[number]
+
+export type SensoryScore = { sense: string; score: number }
+
+/** Paragraph-relative UTF-16 span for a single sensory cue. */
+export type SensoryHighlightSpan = {
+  sense: Sense
+  block: number
+  start: number
+  end: number
+}
 
 export type Segment = {
   text: string
@@ -100,7 +114,7 @@ export const MANUSCRIPT: Paragraph[] = [
     arousal: 0.25,
     segments: [
       { text: 'The ' },
-      { text: 'lighthouse stood pale against the bruised sky', kind: 'sensory' },
+      { text: 'lighthouse stood pale against the bruised sky' },
       { text: ', and the wind ' },
       { text: 'was carried', kind: 'passive' },
       { text: ' inland like a rumor nobody wanted to repeat.' },
@@ -113,7 +127,7 @@ export const MANUSCRIPT: Paragraph[] = [
     arousal: 0.35,
     segments: [
       { text: 'Mara pressed her palm to the cold glass and listened to the ' },
-      { text: 'gulls shrieking over the breakwater', kind: 'sensory' },
+      { text: 'gulls shrieking over the breakwater' },
       { text: '. ' },
       { text: '"You came back,"', kind: 'dialogue' },
       { text: ' she ' },
@@ -133,7 +147,7 @@ export const MANUSCRIPT: Paragraph[] = [
       { text: ', and the words ' },
       { text: 'were swallowed', kind: 'passive' },
       { text: ' by the ' },
-      { text: 'salt-thick air', kind: 'sensory' },
+      { text: 'salt-thick air' },
       { text: '.' },
     ],
   },
@@ -144,7 +158,7 @@ export const MANUSCRIPT: Paragraph[] = [
     arousal: 0.72,
     segments: [
       { text: 'The lamp above them ' },
-      { text: 'flickered, throwing long amber teeth across the floor', kind: 'sensory' },
+      { text: 'flickered, throwing long amber teeth across the floor' },
       { text: '. Something ' },
       { text: 'had been broken', kind: 'passive' },
       { text: ' here, years ago, and never repaired.' },
@@ -160,7 +174,7 @@ export const MANUSCRIPT: Paragraph[] = [
       { text: ' she ' },
       { text: 'snapped', kind: 'tag' },
       { text: '. The ' },
-      { text: 'tang of rust and brine', kind: 'sensory' },
+      { text: 'tang of rust and brine' },
       { text: ' filled the narrow room as her voice climbed.' },
     ],
   },
@@ -171,7 +185,7 @@ export const MANUSCRIPT: Paragraph[] = [
     arousal: 0.6,
     segments: [
       { text: 'Thomas reached out. His knuckles ' },
-      { text: 'grazed the rough wool of her sleeve', kind: 'sensory' },
+      { text: 'grazed the rough wool of her sleeve' },
       { text: '. ' },
       { text: '"I came to tell you the truth,"', kind: 'dialogue' },
       { text: ' he ' },
@@ -186,7 +200,7 @@ export const MANUSCRIPT: Paragraph[] = [
     arousal: 0.4,
     segments: [
       { text: 'For a long moment only the ' },
-      { text: 'slow drip of condensation', kind: 'sensory' },
+      { text: 'slow drip of condensation' },
       { text: ' answered him. The storm outside ' },
       { text: 'had been forgotten', kind: 'passive' },
       { text: ' by them both.' },
@@ -199,7 +213,7 @@ export const MANUSCRIPT: Paragraph[] = [
     arousal: 0.3,
     segments: [
       { text: 'Then she laughed — small, surprised, ' },
-      { text: 'bright as a struck match', kind: 'sensory' },
+      { text: 'bright as a struck match' },
       { text: '. ' },
       { text: '"You always were a terrible liar,"', kind: 'dialogue' },
       { text: ' she ' },
@@ -216,7 +230,7 @@ export const MANUSCRIPT: Paragraph[] = [
       { text: 'Outside, the clouds ' },
       { text: 'were pulled apart', kind: 'passive' },
       { text: ' and a thin ribbon of ' },
-      { text: 'gold spilled across the water', kind: 'sensory' },
+      { text: 'gold spilled across the water' },
       { text: ', steady and unhurried.' },
     ],
   },
@@ -306,12 +320,35 @@ export const EXPOSITION: ExpositionPoint[] = MANUSCRIPT.map((p, i) => ({
 }))
 
 // ---- Sensory Palette -------------------------------------------------------
-export const SENSORY = [
-  { sense: 'Visual', score: 86 },
-  { sense: 'Auditory', score: 64 },
-  { sense: 'Tactile', score: 48 },
-  { sense: 'Olfactory', score: 31 },
-  { sense: 'Gustatory', score: 12 },
+export const SENSORY: SensoryScore[] = [
+  { sense: 'Sight', score: 40 },
+  { sense: 'Sound', score: 20 },
+  { sense: 'Touch', score: 20 },
+  { sense: 'Smell', score: 20 },
+  { sense: 'Taste', score: 0 },
+]
+
+/** Seed spans matching the lighthouse sample (paragraph-relative offsets). */
+export const SENSORY_SPANS: SensoryHighlightSpan[] = [
+  // p1: "lighthouse stood pale against the bruised sky"
+  { sense: 'sight', block: 0, start: 4, end: 49 },
+  // p2: "cold glass" + "gulls shrieking over the breakwater"
+  { sense: 'touch', block: 1, start: 29, end: 39 },
+  { sense: 'sound', block: 1, start: 60, end: 95 },
+  // p3: "salt-thick air"
+  { sense: 'smell', block: 2, start: 76, end: 90 },
+  // p4: "flickered, throwing long amber teeth across the floor"
+  { sense: 'sight', block: 3, start: 20, end: 73 },
+  // p5: "tang of rust and brine"
+  { sense: 'smell', block: 4, start: 45, end: 67 },
+  // p6: "grazed the rough wool of her sleeve"
+  { sense: 'touch', block: 5, start: 33, end: 68 },
+  // p7: "slow drip of condensation"
+  { sense: 'sound', block: 6, start: 27, end: 52 },
+  // p8: "bright as a struck match"
+  { sense: 'sight', block: 7, start: 37, end: 61 },
+  // p9: "gold spilled across the water"
+  { sense: 'sight', block: 8, start: 59, end: 88 },
 ]
 
 // ---- Character & Dialogue --------------------------------------------------
@@ -570,7 +607,18 @@ export const HIGHLIGHT_LEGEND: {
   label: string
   swatch: string
 }[] = [
-  { kind: 'sensory', label: 'Sensory detail', swatch: 'bg-chart-2' },
   { kind: 'dialogue', label: 'Dialogue', swatch: 'bg-chart-1' },
   { kind: 'tag', label: 'Dialogue tags', swatch: 'bg-chart-3' },
+]
+
+export const SENSE_LEGEND: {
+  sense: Sense
+  label: string
+  swatch: string
+}[] = [
+  { sense: 'sight', label: 'Sight', swatch: 'bg-chart-2' },
+  { sense: 'sound', label: 'Sound', swatch: 'bg-chart-3' },
+  { sense: 'touch', label: 'Touch', swatch: 'bg-chart-1' },
+  { sense: 'smell', label: 'Smell', swatch: 'bg-chart-5' },
+  { sense: 'taste', label: 'Taste', swatch: 'bg-chart-4' },
 ]

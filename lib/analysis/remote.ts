@@ -6,6 +6,9 @@ export const ANALYZE_CONCURRENCY = 2
 /** Soft concurrency for POST /voice — MiniLM is heavier; keep serial. */
 export const VOICE_CONCURRENCY = 1
 
+/** Soft concurrency for POST /sensory — MiniLM on leftover sentences; keep serial. */
+export const SENSORY_CONCURRENCY = 1
+
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504])
 const MAX_ATTEMPTS = 4
 const BASE_DELAY_MS = 400

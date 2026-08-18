@@ -13,6 +13,9 @@ import type {
   Paragraph,
   ExpositionPoint,
   VoiceTrendPoint,
+  SensoryHighlightSpan,
+  SensoryScore,
+  DialogueAttributionSpan,
 } from '@/lib/analysis-data'
 
 // ---------------------------------------------------------------------------
@@ -132,7 +135,8 @@ type TensionPoint = { block: number; label: string; valence: number; arousal: nu
 type PacingPoint = { section: string; action: number; description: number; dialogue: number }
 
 // Sensory output
-type SensoryScore = { sense: string; score: number }[]
+type SensoryScoreRow = SensoryScore[]
+type SensoryHighlightSpanRow = SensoryHighlightSpan[]
 
 // Character / voice output
 type CharacterPair = {
@@ -165,12 +169,7 @@ type DialogueIssue = {
   title: string
   detail: string
 }
-type DialogueAttributionSpan = {
-  speaker: string
-  block: number
-  start: number
-  end: number
-}
+type DialogueAttributionSpanRow = DialogueAttributionSpan
 
 export const analysisResults = pgTable(
   'analysis_results',
@@ -208,8 +207,10 @@ export const analysisResults = pgTable(
     exposition: jsonb('exposition').$type<ExpositionPoint[]>(),
 
     // ---- Sensory tab --------------------------------------------------
-    sensory: jsonb('sensory').$type<SensoryScore>(),
+    sensory: jsonb('sensory').$type<SensoryScoreRow>(),
     sensoryAdvice: text('sensory_advice'), // plain-text coaching note
+    // Per-cue sense spans from POST /sensory (paragraph-relative UTF-16).
+    sensorySpans: jsonb('sensory_spans').$type<SensoryHighlightSpanRow>(),
 
     // ---- Character / voice tab ----------------------------------------
     characters: jsonb('characters').$type<string[]>(),
@@ -217,7 +218,7 @@ export const analysisResults = pgTable(
     voiceProfiles: jsonb('voice_profiles').$type<VoiceProfile[]>(),
     dialogueIssues: jsonb('dialogue_issues').$type<DialogueIssue[]>(),
     // Per-quote speaker attribution from POST /voice (includes UNKNOWN).
-    speakerSpans: jsonb('speaker_spans').$type<DialogueAttributionSpan[]>(),
+    speakerSpans: jsonb('speaker_spans').$type<DialogueAttributionSpanRow[]>(),
 
     // ---- Summary stats ------------------------------------------------
     readabilityGrade: real('readability_grade'),

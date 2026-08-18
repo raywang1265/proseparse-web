@@ -311,6 +311,7 @@ export async function upsertAnalysis(
         exposition: values.exposition,
         sensory: values.sensory,
         sensoryAdvice: values.sensoryAdvice,
+        sensorySpans: values.sensorySpans,
         characters: values.characters,
         voiceMatrix: values.voiceMatrix,
         voiceProfiles: values.voiceProfiles,

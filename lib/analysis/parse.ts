@@ -114,7 +114,6 @@ const KIND_PRIORITY: Record<HighlightKind, number> = {
   tag: 1,
   passive: 2,
   active: 3,
-  sensory: 4,
 }
 
 export function buildSegments(text: string, spans: MarkedSpan[]): Segment[] {

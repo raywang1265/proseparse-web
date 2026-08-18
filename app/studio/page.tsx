@@ -85,6 +85,7 @@ function toStudioAnalysis(a: AnalysisResult): StudioAnalysis {
     exposition: a.exposition ?? null,
     sensory: a.sensory ?? null,
     sensoryAdvice: a.sensoryAdvice ?? null,
+    sensorySpans: a.sensorySpans ?? null,
     characters: a.characters ?? null,
     voiceMatrix: a.voiceMatrix ?? null,
     voiceProfiles: a.voiceProfiles ?? null,

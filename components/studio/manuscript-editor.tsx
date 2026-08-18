@@ -4,9 +4,13 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Check, Pencil, BookOpen, Loader2, AlertCircle } from 'lucide-react'
 import {
   HIGHLIGHT_LEGEND,
+  SENSE_LEGEND,
+  SENSES,
   type DialogueAttributionSpan,
   type HighlightKind,
   type Paragraph,
+  type Sense,
+  type SensoryHighlightSpan,
   type SentenceBucket,
 } from '@/lib/analysis-data'
 import { cn } from '@/lib/utils'
@@ -15,11 +19,18 @@ import type { ViewState } from './types'
 import type { SaveState } from './workspace'
 
 const HL_BG: Record<HighlightKind, string> = {
-  sensory: 'bg-hl-sensory text-hl-sensory-foreground',
   passive: 'bg-hl-passive text-hl-passive-foreground',
   active: 'bg-hl-active text-hl-active-foreground',
   dialogue: 'bg-hl-dialogue text-hl-dialogue-foreground',
   tag: 'bg-hl-tag text-hl-tag-foreground',
+}
+
+const SENSE_HL: Record<Sense, string> = {
+  sight: 'bg-hl-sight text-hl-sight-foreground',
+  sound: 'bg-hl-sound text-hl-sound-foreground',
+  touch: 'bg-hl-touch text-hl-touch-foreground',
+  smell: 'bg-hl-smell text-hl-smell-foreground',
+  taste: 'bg-hl-taste text-hl-taste-foreground',
 }
 
 const SENTENCE_BG: Record<SentenceBucket, string | null> = {
@@ -47,7 +58,15 @@ const SPEAKER_HL = [
 // Kinds highlighted together by the combined active/passive lens.
 const GRAMMAR_VOICE_KINDS: HighlightKind[] = ['active', 'passive']
 
-export type Lens = HighlightKind | 'none' | 'sentence-length' | 'voice'
+const SENSE_SET = new Set<string>(SENSES)
+
+export type Lens =
+  | HighlightKind
+  | 'none'
+  | 'sentence-length'
+  | 'voice'
+  | 'sensory'
+  | Sense
 
 /** Speakers sub-panel — separate from style lenses so chips stay uncrowded. */
 export type SpeakerLens =
@@ -84,9 +103,22 @@ function matchesSpeakerLens(
   return speaker === lens.speaker
 }
 
+function isSense(value: string): value is Sense {
+  return SENSE_SET.has(value)
+}
+
+function isSensoryLens(lens: Lens): boolean {
+  return lens === 'sensory' || isSense(lens)
+}
+
 type PaintedChunk = {
   text: string
   speaker?: string
+}
+
+type SensoryPaintedChunk = {
+  text: string
+  sense?: Sense
 }
 
 function paintSpeakerChunks(
@@ -110,6 +142,33 @@ function paintSpeakerChunks(
     if (s.start < cursor) continue
     if (s.start > cursor) chunks.push({ text: text.slice(cursor, s.start) })
     chunks.push({ text: text.slice(s.start, s.end), speaker: s.speaker })
+    cursor = s.end
+  }
+  if (cursor < text.length) chunks.push({ text: text.slice(cursor) })
+  return chunks.filter((c) => c.text.length > 0)
+}
+
+function paintSensoryChunks(
+  text: string,
+  spans: SensoryHighlightSpan[],
+  lens: Lens,
+): SensoryPaintedChunk[] {
+  const relevant = spans
+    .filter((s) => lens === 'sensory' || s.sense === lens)
+    .map((s) => ({
+      start: Math.max(0, Math.min(s.start, text.length)),
+      end: Math.max(0, Math.min(s.end, text.length)),
+      sense: s.sense,
+    }))
+    .filter((s) => s.end > s.start)
+    .sort((a, b) => a.start - b.start || b.end - a.end)
+
+  const chunks: SensoryPaintedChunk[] = []
+  let cursor = 0
+  for (const s of relevant) {
+    if (s.start < cursor) continue
+    if (s.start > cursor) chunks.push({ text: text.slice(cursor, s.start) })
+    chunks.push({ text: text.slice(s.start, s.end), sense: s.sense })
     cursor = s.end
   }
   if (cursor < text.length) chunks.push({ text: text.slice(cursor) })
@@ -143,6 +202,7 @@ export function ManuscriptEditor({
   speakerLens,
   onSpeakerLensChange,
   speakerSpans,
+  sensorySpans,
   activeBlock,
   scrollToBlock,
   onHoverBlock,
@@ -162,6 +222,7 @@ export function ManuscriptEditor({
   speakerLens: SpeakerLens
   onSpeakerLensChange: (l: SpeakerLens) => void
   speakerSpans: DialogueAttributionSpan[] | null
+  sensorySpans: SensoryHighlightSpan[] | null
   activeBlock: number | null
   scrollToBlock: number | null
   onHoverBlock: (b: number | null) => void
@@ -173,6 +234,10 @@ export function ManuscriptEditor({
 
   const spans = speakerSpans ?? []
   const hasSpeakerData = spans.length > 0
+
+  const senseSpans = sensorySpans ?? []
+  const hasSensoryData = senseSpans.length > 0
+  const sensesActive = isSensoryLens(lens)
 
   const castNames = useMemo(() => {
     const seen = new Set<string>()
@@ -199,6 +264,16 @@ export function ManuscriptEditor({
     }
     return map
   }, [spans])
+
+  const sensoryByBlock = useMemo(() => {
+    const map = new Map<number, SensoryHighlightSpan[]>()
+    for (const s of senseSpans) {
+      const list = map.get(s.block) ?? []
+      list.push(s)
+      map.set(s.block, list)
+    }
+    return map
+  }, [senseSpans])
 
   useEffect(() => {
     if (effectiveMode !== 'read' || scrollToBlock == null) return
@@ -272,6 +347,14 @@ export function ManuscriptEditor({
               active={!speakersActive && lens === 'none'}
               onClick={() => selectStyleLens('none')}
             />
+            {hasSensoryData ? (
+              <LensChip
+                label="Senses"
+                swatch="bg-chart-2"
+                active={!speakersActive && sensesActive}
+                onClick={() => selectStyleLens('sensory')}
+              />
+            ) : null}
             {HIGHLIGHT_LEGEND.map((l) => (
               <LensChip
                 key={l.kind}
@@ -294,6 +377,28 @@ export function ManuscriptEditor({
               onClick={() => selectStyleLens('sentence-length')}
             />
           </div>
+
+          {hasSensoryData && sensesActive && !speakersActive ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Sense
+              </span>
+              <LensChip
+                label="All"
+                active={lens === 'sensory'}
+                onClick={() => selectStyleLens('sensory')}
+              />
+              {SENSE_LEGEND.map((l) => (
+                <LensChip
+                  key={l.sense}
+                  label={l.label}
+                  swatch={l.swatch}
+                  active={lens === l.sense}
+                  onClick={() => selectStyleLens(l.sense)}
+                />
+              ))}
+            </div>
+          ) : null}
 
           {hasSpeakerData ? (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -337,6 +442,7 @@ export function ManuscriptEditor({
           <article className="mx-auto max-w-2xl px-6 py-10">
             {paragraphs!.map((p) => {
               const isActive = activeBlock === p.block
+              const plain = paragraphPlainText(p)
               return (
                 <p
                   key={p.id}
@@ -352,7 +458,7 @@ export function ManuscriptEditor({
                 >
                   {speakersActive
                     ? paintSpeakerChunks(
-                        paragraphPlainText(p),
+                        plain,
                         spansByBlock.get(p.block) ?? [],
                         speakerLens,
                       ).map((chunk, i) => {
@@ -380,42 +486,71 @@ export function ManuscriptEditor({
                           </span>
                         )
                       })
-                    : lens === 'sentence-length' && p.sentences?.length
-                      ? p.sentences.map((s, i) => {
-                          const bg = SENTENCE_BG[s.bucket]
+                    : sensesActive
+                      ? paintSensoryChunks(
+                          plain,
+                          sensoryByBlock.get(p.block) ?? [],
+                          lens,
+                        ).map((chunk, i) => {
+                          const highlighted = !!chunk.sense
                           return (
                             <span
                               key={i}
-                              className={cn(
-                                bg && 'rounded-md px-1 py-0.5',
-                                bg ?? undefined,
-                              )}
-                            >
-                              {s.text}{' '}
-                            </span>
-                          )
-                        })
-                      : p.segments.map((seg, i) => {
-                          const highlighted =
-                            lens === 'voice'
-                              ? !!seg.kind &&
-                                GRAMMAR_VOICE_KINDS.includes(seg.kind)
-                              : lens !== 'none' &&
-                                lens !== 'sentence-length' &&
-                                seg.kind === lens
-                          return (
-                            <span
-                              key={i}
+                              title={
+                                chunk.sense
+                                  ? chunk.sense.charAt(0).toUpperCase() +
+                                    chunk.sense.slice(1)
+                                  : undefined
+                              }
                               className={cn(
                                 highlighted && 'rounded-md px-1 py-0.5',
                                 highlighted &&
-                                  HL_BG[seg.kind as HighlightKind],
+                                  chunk.sense &&
+                                  SENSE_HL[chunk.sense],
                               )}
                             >
-                              {seg.text}
+                              {chunk.text}
                             </span>
                           )
-                        })}
+                        })
+                      : lens === 'sentence-length' && p.sentences?.length
+                        ? p.sentences.map((s, i) => {
+                            const bg = SENTENCE_BG[s.bucket]
+                            return (
+                              <span
+                                key={i}
+                                className={cn(
+                                  bg && 'rounded-md px-1 py-0.5',
+                                  bg ?? undefined,
+                                )}
+                              >
+                                {s.text}{' '}
+                              </span>
+                            )
+                          })
+                        : p.segments.map((seg, i) => {
+                            const highlighted =
+                              lens === 'voice'
+                                ? !!seg.kind &&
+                                  GRAMMAR_VOICE_KINDS.includes(seg.kind)
+                                : lens !== 'none' &&
+                                  lens !== 'sentence-length' &&
+                                  !isSensoryLens(lens) &&
+                                  seg.kind === lens
+                            return (
+                              <span
+                                key={i}
+                                className={cn(
+                                  highlighted && 'rounded-md px-1 py-0.5',
+                                  highlighted &&
+                                    seg.kind &&
+                                    HL_BG[seg.kind],
+                                )}
+                              >
+                                {seg.text}
+                              </span>
+                            )
+                          })}
                 </p>
               )
             })}
