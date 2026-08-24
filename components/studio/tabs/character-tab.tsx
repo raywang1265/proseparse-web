@@ -20,6 +20,11 @@ import {
   type VoiceProfile,
   POS_LABELS,
 } from '@/lib/analysis-data'
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { InsightCard } from '../insight-card'
 import { cn } from '@/lib/utils'
 import type { StudioAnalysis } from '../types'
@@ -53,12 +58,34 @@ function cellColor(sim: number) {
   return 'bg-chart-1/25 text-foreground'
 }
 
-function pairTooltip(pair: CharacterPair): string {
-  const parts = [`Combined ${pair.similarity.toFixed(2)}`]
-  if (pair.semSim != null) parts.push(`theme ${pair.semSim.toFixed(2)}`)
-  if (pair.styleSim != null) parts.push(`diction ${pair.styleSim.toFixed(2)}`)
-  if (pair.vocabSim != null) parts.push(`vocabulary ${pair.vocabSim.toFixed(2)}`)
-  return parts.join(' · ')
+function MatrixPairTooltip({ pair }: { pair: CharacterPair }) {
+  const rows: { label: string; value: number | undefined; total?: boolean }[] = [
+    { label: 'Theme', value: pair.semSim },
+    { label: 'Diction', value: pair.styleSim },
+    { label: 'Vocabulary', value: pair.vocabSim },
+    { label: 'Combined', value: pair.similarity, total: true },
+  ]
+  return (
+    <div className="grid min-w-[8.5rem] gap-1 text-left">
+      <p className="mb-0.5 font-medium text-popover-foreground">
+        {shortName(pair.a)} · {shortName(pair.b)}
+      </p>
+      {rows.map((row) => (
+        <p
+          key={row.label}
+          className={cn(
+            'flex items-center justify-between gap-6 text-muted-foreground',
+            row.total && 'mt-0.5 border-t border-border/60 pt-1 font-medium',
+          )}
+        >
+          <span>{row.label}</span>
+          <span className="font-mono tabular-nums text-foreground">
+            {row.value == null ? '—' : row.value.toFixed(2)}
+          </span>
+        </p>
+      ))}
+    </div>
+  )
 }
 
 function buildRadarData(profiles: VoiceProfile[]) {
@@ -157,23 +184,33 @@ export function CharacterTab({
                   </th>
                   {characters.map((col) => {
                     const pair = similarityFor(voiceMatrix, row, col)
-                    const sim = pair?.similarity ?? null
                     return (
                       <td key={col}>
-                        {sim == null ? (
+                        {pair == null ? (
                           <div className="flex h-9 items-center justify-center rounded-md bg-muted/50 font-mono text-muted-foreground">
                             —
                           </div>
                         ) : (
-                          <div
-                            title={pair ? pairTooltip(pair) : undefined}
-                            className={cn(
-                              'flex h-9 items-center justify-center rounded-md font-mono font-medium tabular-nums',
-                              cellColor(sim),
-                            )}
-                          >
-                            {sim.toFixed(2)}
-                          </div>
+                          <UiTooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className={cn(
+                                  'flex h-9 w-full items-center justify-center rounded-md font-mono font-medium tabular-nums',
+                                  cellColor(pair.similarity),
+                                )}
+                              >
+                                {pair.similarity.toFixed(2)}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              sideOffset={6}
+                              className="rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md [&_.rotate-45]:hidden"
+                            >
+                              <MatrixPairTooltip pair={pair} />
+                            </TooltipContent>
+                          </UiTooltip>
                         )}
                       </td>
                     )
@@ -262,6 +299,7 @@ export function CharacterTab({
                   axisLine={false}
                 />
                 <Tooltip
+                  cursor={{ fill: 'var(--color-foreground)', fillOpacity: 0.04 }}
                   contentStyle={{
                     fontSize: 11,
                     borderRadius: 8,
