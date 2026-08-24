@@ -171,7 +171,6 @@ export function Workspace({
           )}
           {isPending && (
             <p className="hidden max-w-48 text-right text-[11px] leading-snug text-muted-foreground sm:block">
-              Can take up to a couple of minutes
             </p>
           )}
           <Tooltip>

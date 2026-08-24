@@ -34,6 +34,7 @@ export function InsightsPanel({
   onSelectBlock: (b: number | null) => void
 }) {
   const stale = viewState === 'stale'
+  const analyzing = viewState === 'analyzing'
   const hasAnalysis = !!analysis
 
   // When stale, the analysis no longer maps to the live text — disable the
@@ -59,8 +60,8 @@ export function InsightsPanel({
           </TabsList>
         </div>
 
-        {!hasAnalysis ? (
-          <EmptyState viewState={viewState} />
+        {analyzing || !hasAnalysis ? (
+          <EmptyState viewState={analyzing ? 'analyzing' : viewState} />
         ) : (
           <>
             {stale && <StaleBanner />}
@@ -105,13 +106,6 @@ function StatusBadge({ viewState }: { viewState: ViewState }) {
       <span className="inline-flex items-center gap-1.5 text-[11px] text-chart-4">
         <span className="size-1.5 rounded-full bg-chart-4" />
         out of date
-      </span>
-    )
-  if (viewState === 'analyzing')
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <Loader2 className="size-3 animate-spin" />
-        analyzing
       </span>
     )
   return null
