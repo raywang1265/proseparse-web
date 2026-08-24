@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Type,
-  Activity,
+  BookOpen,
   Palette,
   Users,
   Sparkles,
@@ -12,7 +12,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { StyleTab } from './tabs/style-tab'
-import { NarrativeTab } from './tabs/narrative-tab'
+import { ExpositionTab } from './tabs/exposition-tab'
 import { SensoryTab } from './tabs/sensory-tab'
 import { CharacterTab } from './tabs/character-tab'
 import { cn } from '@/lib/utils'
@@ -43,7 +43,7 @@ export function InsightsPanel({
 
   return (
     <aside className="flex h-full w-[27rem] shrink-0 flex-col border-l border-border/40 bg-card/30">
-      <Tabs defaultValue="narrative" className="flex h-full min-h-0 flex-col gap-0">
+      <Tabs defaultValue="exposition" className="flex h-full min-h-0 flex-col gap-0">
         <div className="px-4 pb-3 pt-4">
           <div className="mb-3 flex items-center justify-between px-1">
             <h2 className="font-serif text-base font-semibold tracking-tight text-foreground">
@@ -53,7 +53,7 @@ export function InsightsPanel({
           </div>
           <TabsList className="grid h-auto w-full grid-cols-4 rounded-2xl bg-muted/50 p-1">
             <TabTrigger value="style" icon={Type} label="Style" />
-            <TabTrigger value="narrative" icon={Activity} label="Pacing" />
+            <TabTrigger value="exposition" icon={BookOpen} label="Exposition" />
             <TabTrigger value="sensory" icon={Palette} label="Sensory" />
             <TabTrigger value="character" icon={Users} label="Voice" />
           </TabsList>
@@ -69,8 +69,8 @@ export function InsightsPanel({
                 <TabsContent value="style" className="mt-0">
                   <StyleTab analysis={analysis} />
                 </TabsContent>
-                <TabsContent value="narrative" className="mt-0">
-                  <NarrativeTab
+                <TabsContent value="exposition" className="mt-0">
+                  <ExpositionTab
                     analysis={analysis}
                     activeBlock={stale ? null : activeBlock}
                     onHoverBlock={hover}
@@ -146,7 +146,7 @@ function EmptyState({ viewState }: { viewState: ViewState }) {
         : {
             icon: <Sparkles className="size-5 text-muted-foreground" />,
             title: 'No insights yet',
-            body: 'Run an analysis to map this draft’s tension, pacing, voice, and sensory texture.',
+            body: 'Run an analysis to map this draft’s exposition, voice, and sensory texture.',
           }
 
   return (

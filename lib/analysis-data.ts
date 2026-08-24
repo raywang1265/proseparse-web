@@ -295,9 +295,12 @@ export const PACING = [
 // a diverging bar around a zero baseline.
 export type ExpositionPoint = {
   block: number
-  label: string
+  label: string // "¶n" for the chart x-axis (not the classifier class)
+  kind: 'direct' | 'indirect'
+  pDirect: number // 0..1 softmax P(direct)
   direct: number // 0..100 share of the paragraph that "tells"
   indirect: number // 0..100 share that "shows"
+  truncated: boolean // classifier only saw the first 384 tokens
 }
 
 const EXPOSITION_SPLIT = [
@@ -312,12 +315,19 @@ const EXPOSITION_SPLIT = [
   { direct: 48, indirect: 52 },
 ]
 
-export const EXPOSITION: ExpositionPoint[] = MANUSCRIPT.map((p, i) => ({
-  block: p.block,
-  label: `¶${p.block + 1}`,
-  direct: EXPOSITION_SPLIT[i]?.direct ?? 50,
-  indirect: EXPOSITION_SPLIT[i]?.indirect ?? 50,
-}))
+export const EXPOSITION: ExpositionPoint[] = MANUSCRIPT.map((p, i) => {
+  const direct = EXPOSITION_SPLIT[i]?.direct ?? 50
+  const indirect = EXPOSITION_SPLIT[i]?.indirect ?? 50
+  return {
+    block: p.block,
+    label: `¶${p.block + 1}`,
+    kind: direct >= 50 ? 'direct' : 'indirect',
+    pDirect: direct / 100,
+    direct,
+    indirect,
+    truncated: false,
+  }
+})
 
 // ---- Sensory Palette -------------------------------------------------------
 export const SENSORY: SensoryScore[] = [

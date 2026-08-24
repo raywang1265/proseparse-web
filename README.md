@@ -1,7 +1,7 @@
 # ProseParse
 
 A writing-analysis studio for novelists and editors. Drop in a chapter and
-ProseParse sits beside your words, mapping tension, pacing, voice, exposition,
+ProseParse sits beside your words, mapping voice, exposition,
 and sensory texture — visualized alongside the manuscript.
 
 > **Status:** active development. The web app is functional locally with auth,
@@ -25,15 +25,16 @@ insight panels, session sidebar, folders).
 - **Analysis** — when `ANALYSIS_API_URL` is set, the app calls the
   [proseparse-backend](https://github.com/raywang1265/proseparse-backend) service
   for batched style analysis (`POST /analyze`), five-sense highlighting
-  (`POST /sensory`), and character/voice similarity (`POST /voice`). Without it,
-  a local heuristic fallback runs for style only. Style metrics, sensory cue
-  spans/scores, and character voice profiles are persisted today.
+  (`POST /sensory`), character/voice similarity (`POST /voice`), and direct vs
+  indirect exposition (`POST /exposition`). Without it, a local heuristic
+  fallback runs for style only. Style metrics, sensory cue spans/scores,
+  character voice profiles, and exposition scores are persisted today.
 
 ## What's next
 
 - **Deploy the web app** — Vercel (or similar) once env config is settled.
-- **Expand ML coverage** — tension/pacing, exposition, and readability metrics
-  (schema and UI tabs exist; results are not populated yet).
+- **Expand ML coverage** — tension/pacing and readability metrics
+  (schema and UI stubs exist; results are not populated yet).
 - **Production hardening** — error handling, observability, and cold-start UX
   for the analysis backend.
 

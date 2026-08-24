@@ -201,7 +201,7 @@ export const analysisResults = pgTable(
     styleMetrics: jsonb('style_metrics').$type<StyleMetric[]>(),
     dialogueTags: jsonb('dialogue_tags').$type<DialogueTag[]>(),
 
-    // ---- Narrative / pacing tab ---------------------------------------
+    // ---- Exposition tab -----------------------------------------------
     tension: jsonb('tension').$type<TensionPoint[]>(),
     pacing: jsonb('pacing').$type<PacingPoint[]>(),
     exposition: jsonb('exposition').$type<ExpositionPoint[]>(),

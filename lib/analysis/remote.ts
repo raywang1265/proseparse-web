@@ -9,6 +9,9 @@ export const VOICE_CONCURRENCY = 1
 /** Soft concurrency for POST /sensory — MiniLM on leftover sentences; keep serial. */
 export const SENSORY_CONCURRENCY = 1
 
+/** Soft concurrency for POST /exposition — DeBERTa batches; cap so we don't starve /analyze and /voice. */
+export const EXPOSITION_CONCURRENCY = 4
+
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504])
 const MAX_ATTEMPTS = 4
 const BASE_DELAY_MS = 400

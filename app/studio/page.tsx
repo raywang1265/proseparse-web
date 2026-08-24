@@ -12,6 +12,10 @@ import type {
 } from '@/components/studio/types'
 import type { AnalysisResult } from '@/lib/db/schema'
 
+// Cold /exposition batches can approach Cloud Run's 120s timeout; give the
+// Re-analyze server action enough room on hosted runtimes.
+export const maxDuration = 300
+
 export default async function Page({
   searchParams,
 }: {
