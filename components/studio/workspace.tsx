@@ -83,12 +83,7 @@ export function Workspace({
     scheduleSave(next)
   }
 
-  const canReanalyze =
-    !isPending &&
-    active != null &&
-    (effectiveViewState === 'stale' ||
-      effectiveViewState === 'unanalyzed' ||
-      effectiveViewState === 'error')
+  const canReanalyze = !isPending && active != null
 
   function handleReanalyze() {
     if (!active) return
@@ -142,9 +137,9 @@ export function Workspace({
             title={
               isPending
                 ? 'Analyzing…'
-                : canReanalyze
+                : active
                   ? 'Re-analyze this draft'
-                  : 'Analysis is up to date'
+                  : 'Open a session to analyze'
             }
             className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
