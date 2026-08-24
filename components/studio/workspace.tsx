@@ -9,10 +9,48 @@ import { InsightsPanel } from './insights-panel'
 import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { saveSessionTextAction, analyzeSessionAction } from '@/app/studio/actions'
 import type { SidebarSession, SidebarFolder, ActiveSession, ViewState } from './types'
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+/**
+ * Estimated (not real) analysis progress. The server action reports nothing
+ * until it finishes, so this eases toward ~88% over a couple of minutes and
+ * snaps to 100% when the run completes.
+ */
+function useEstimatedProgress(active: boolean) {
+  const [visible, setVisible] = useState(false)
+  const [value, setValue] = useState(0)
+
+  useEffect(() => {
+    if (active) {
+      setVisible(true)
+      setValue(0)
+      const start = Date.now()
+      const id = window.setInterval(() => {
+        const t = (Date.now() - start) / 1000
+        // (1 - e^(-t/36)) * 88 → ~50% at 25s, ~75% at 50s, still under 88% at 2min
+        setValue((1 - Math.exp(-t / 36)) * 88)
+      }, 80)
+      return () => window.clearInterval(id)
+    }
+
+    setValue((prev) => (prev > 0 ? 100 : 0))
+    const hide = window.setTimeout(() => {
+      setVisible(false)
+      setValue(0)
+    }, 400)
+    return () => window.clearTimeout(hide)
+  }, [active])
+
+  return { visible, value }
+}
 
 export function Workspace({
   sessions,
@@ -84,6 +122,7 @@ export function Workspace({
   }
 
   const canReanalyze = !isPending && active != null
+  const progress = useEstimatedProgress(isPending)
 
   function handleReanalyze() {
     if (!active) return
@@ -121,7 +160,7 @@ export function Workspace({
             {active?.title ?? 'No session'}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {analyzeError && (
             <span
               className="max-w-56 truncate text-xs text-destructive"
@@ -130,30 +169,54 @@ export function Workspace({
               {analyzeError}
             </span>
           )}
-          <Button
-            size="sm"
-            disabled={!canReanalyze}
-            onClick={handleReanalyze}
-            title={
-              isPending
-                ? 'Analyzing…'
-                : active
-                  ? 'Re-analyze this draft'
-                  : 'Open a session to analyze'
-            }
-            className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            {isPending ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="size-3.5" />
+          {isPending && (
+            <p className="hidden max-w-48 text-right text-[11px] leading-snug text-muted-foreground sm:block">
+              Can take up to a couple of minutes
+            </p>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <Button
+                  size="sm"
+                  disabled={!canReanalyze}
+                  onClick={handleReanalyze}
+                  className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isPending ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-3.5" />
+                  )}
+                  {isPending ? 'Analyzing…' : 'Re-analyze'}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!isPending && (
+              <TooltipContent side="bottom">
+                {active ? 'Re-analyze this draft' : 'Open a session to analyze'}
+              </TooltipContent>
             )}
-            {isPending ? 'Analyzing…' : 'Re-analyze'}
-          </Button>
+          </Tooltip>
           <ThemeToggle />
           <UserMenu />
         </div>
       </header>
+      {progress.visible && (
+        <div
+          className="h-1 shrink-0 bg-primary/15"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress.value)}
+          aria-label="Analysis progress (estimated)"
+        >
+          <div
+            className="h-full bg-primary transition-[width] duration-200 ease-out"
+            style={{ width: `${progress.value}%` }}
+          />
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         <SessionSidebar
@@ -187,7 +250,7 @@ export function Workspace({
               onHoverBlock={setActiveBlock}
             />
             <InsightsPanel
-              viewState={effectiveViewState}
+              viewState={isPending ? 'analyzing' : effectiveViewState}
               analysis={active.analysis}
               activeBlock={activeBlock}
               onHoverBlock={handleChartHover}

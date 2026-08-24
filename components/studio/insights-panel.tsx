@@ -135,7 +135,7 @@ function EmptyState({ viewState }: { viewState: ViewState }) {
       ? {
           icon: <Loader2 className="size-5 animate-spin text-muted-foreground" />,
           title: 'Analyzing your draft…',
-          body: 'This usually takes a few moments.',
+            body: 'This can take up to a couple of minutes, especially on the first run.',
         }
       : viewState === 'error'
         ? {
