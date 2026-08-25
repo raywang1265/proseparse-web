@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Check, Pencil, BookOpen, Loader2, AlertCircle } from 'lucide-react'
 import {
   HIGHLIGHT_LEGEND,
+  SENSE_COLOR,
   SENSE_LEGEND,
   SENSES,
   type DialogueAttributionSpan,
@@ -26,11 +27,11 @@ const HL_BG: Record<HighlightKind, string> = {
 }
 
 const SENSE_HL: Record<Sense, string> = {
-  sight: 'bg-hl-sight text-hl-sight-foreground',
-  sound: 'bg-hl-sound text-hl-sound-foreground',
-  touch: 'bg-hl-touch text-hl-touch-foreground',
-  smell: 'bg-hl-smell text-hl-smell-foreground',
-  taste: 'bg-hl-taste text-hl-taste-foreground',
+  sight: SENSE_COLOR.sight.highlight,
+  sound: SENSE_COLOR.sound.highlight,
+  touch: SENSE_COLOR.touch.highlight,
+  smell: SENSE_COLOR.smell.highlight,
+  taste: SENSE_COLOR.taste.highlight,
 }
 
 const SENTENCE_BG: Record<SentenceBucket, string | null> = {

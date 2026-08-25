@@ -3,7 +3,7 @@ import { Welcome } from '@/components/landing/welcome'
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-dvh flex-col bg-background text-foreground">
+    <main className="flex min-h-dvh flex-col text-foreground">
       <SiteNav />
       <Welcome />
     </main>

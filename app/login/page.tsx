@@ -6,7 +6,7 @@ import { AuthForm } from '@/components/landing/auth-form'
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-dvh bg-background text-foreground">
+    <main className="flex min-h-dvh text-foreground">
       {/* Brand panel */}
       <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border/40 bg-card/40 p-10 lg:flex">
         <Link href="/" aria-label="ProseParse home">

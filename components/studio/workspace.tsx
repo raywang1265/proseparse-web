@@ -152,7 +152,7 @@ export function Workspace({
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+    <div className="bg-sky-app flex h-dvh flex-col overflow-hidden text-foreground">
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/40 px-3">
         <div className="flex items-center gap-2">
           {collapsed && (

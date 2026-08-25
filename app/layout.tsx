@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Source_Serif_4, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -27,6 +27,14 @@ export const metadata: Metadata = {
   generator: 'v0.app',
 }
 
+// The theme provider defaults to dark and does not follow the OS preference,
+// so the browser chrome color is pinned to the dark sky rather than a
+// prefers-color-scheme pair.
+export const viewport: Viewport = {
+  themeColor: '#080b16',
+  colorScheme: 'dark light',
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,7 +44,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${sourceSerif.variable} ${_geistMono.variable} bg-background`}
+      className={`${inter.variable} ${sourceSerif.variable} ${_geistMono.variable} bg-sky`}
     >
       <body className="font-sans antialiased">
         <ThemeProvider

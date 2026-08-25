@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PreviewMock } from './preview-mock'
+import { InkToChart } from './hero/ink-to-chart'
 
 export function Welcome() {
   return (
@@ -40,7 +40,9 @@ export function Welcome() {
         </p>
       </div>
 
-      <PreviewMock />
+      <div className="w-full max-w-3xl">
+        <InkToChart />
+      </div>
     </section>
   )
 }

@@ -11,15 +11,15 @@ import {
 import { InsightCard } from '../insight-card'
 import type { StudioAnalysis } from '../types'
 import type { Sense } from '@/lib/analysis-data'
-import { SENSES } from '@/lib/analysis-data'
+import { SENSES, SENSE_COLOR } from '@/lib/analysis-data'
 
 /** Opaque fills for bars/chips — highlight tokens are translucent overlays. */
 const SENSE_FILL: Record<Sense, string> = {
-  sight: 'var(--color-chart-2)',
-  sound: 'var(--color-chart-3)',
-  touch: 'var(--color-chart-1)',
-  smell: 'var(--color-chart-5)',
-  taste: 'var(--color-chart-4)',
+  sight: SENSE_COLOR.sight.fill,
+  sound: SENSE_COLOR.sound.fill,
+  touch: SENSE_COLOR.touch.fill,
+  smell: SENSE_COLOR.smell.fill,
+  taste: SENSE_COLOR.taste.fill,
 }
 
 const LABEL_TO_SENSE: Record<string, Sense> = {

@@ -135,14 +135,53 @@ export const HIGHLIGHT_LEGEND: {
   { kind: 'tag', label: 'Dialogue tags', swatch: 'bg-chart-3' },
 ]
 
+/**
+ * Canonical sense -> palette slot. Legend swatches, opaque chart fills, and the
+ * translucent manuscript overlays all derive from this single map so the three
+ * surfaces can never drift apart.
+ */
+export const SENSE_COLOR: Record<
+  Sense,
+  { label: string; swatch: string; fill: string; highlight: string }
+> = {
+  sight: {
+    label: 'Sight',
+    swatch: 'bg-chart-2',
+    fill: 'var(--color-chart-2)',
+    highlight: 'bg-hl-sight text-hl-sight-foreground',
+  },
+  sound: {
+    label: 'Sound',
+    swatch: 'bg-chart-3',
+    fill: 'var(--color-chart-3)',
+    highlight: 'bg-hl-sound text-hl-sound-foreground',
+  },
+  touch: {
+    label: 'Touch',
+    swatch: 'bg-chart-1',
+    fill: 'var(--color-chart-1)',
+    highlight: 'bg-hl-touch text-hl-touch-foreground',
+  },
+  smell: {
+    label: 'Smell',
+    swatch: 'bg-chart-5',
+    fill: 'var(--color-chart-5)',
+    highlight: 'bg-hl-smell text-hl-smell-foreground',
+  },
+  taste: {
+    label: 'Taste',
+    swatch: 'bg-chart-4',
+    fill: 'var(--color-chart-4)',
+    highlight: 'bg-hl-taste text-hl-taste-foreground',
+  },
+}
+
 export const SENSE_LEGEND: {
   sense: Sense
   label: string
   swatch: string
-}[] = [
-  { sense: 'sight', label: 'Sight', swatch: 'bg-chart-2' },
-  { sense: 'sound', label: 'Sound', swatch: 'bg-chart-3' },
-  { sense: 'touch', label: 'Touch', swatch: 'bg-chart-1' },
-  { sense: 'smell', label: 'Smell', swatch: 'bg-chart-5' },
-  { sense: 'taste', label: 'Taste', swatch: 'bg-chart-4' },
-]
+}[] = SENSES.map((sense) => ({
+  sense,
+  label: SENSE_COLOR[sense].label,
+  swatch: SENSE_COLOR[sense].swatch,
+}))
