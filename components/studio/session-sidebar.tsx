@@ -384,7 +384,7 @@ function FolderSection({
       <div
         ref={setNodeRef}
         className={cn(
-          'group flex items-center gap-1 rounded-xl px-1.5 py-1 transition-colors',
+          'group flex items-center gap-1.5 rounded-xl px-2 py-1 transition-colors',
           isOver && 'bg-primary/10 ring-1 ring-primary/30',
         )}
       >
@@ -414,10 +414,10 @@ function FolderSection({
               onKeyDown={handleKeyDown}
               onClick={(e) => e.stopPropagation()}
               aria-label="Folder name"
-              className="min-w-0 flex-1 rounded bg-background/60 px-1 py-0 text-xs outline-none ring-1 ring-primary/50"
+              className="min-w-0 flex-1 rounded bg-background/60 px-1 py-0 text-[11px] outline-none ring-1 ring-primary/50"
             />
           ) : (
-            <span className="truncate text-xs font-medium text-muted-foreground">
+            <span className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {optimisticName}
             </span>
           )}

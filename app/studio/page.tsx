@@ -65,6 +65,11 @@ export default async function Page({
       folders={folders}
       activeId={activeId ?? null}
       active={active}
+      account={{
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      }}
     />
   )
 }

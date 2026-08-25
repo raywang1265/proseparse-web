@@ -23,9 +23,17 @@ function initials(name: string | null, email: string | null) {
   return (parts[0][0] + parts[1][0]).toUpperCase()
 }
 
-export function UserMenu() {
+/** Server-session identity. Studio is gated by a cookie, so this is the
+ *  source of truth — the Firebase client user can still be null. */
+export type UserMenuAccount = {
+  email: string | null
+  name: string | null
+  picture: string | null
+}
+
+export function UserMenu({ account }: { account?: UserMenuAccount }) {
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, logout, loading } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
 
   async function handleSignOut() {
@@ -39,10 +47,21 @@ export function UserMenu() {
     }
   }
 
-  if (!user) return null
+  const displayName = account?.name ?? user?.displayName ?? null
+  const email = account?.email ?? user?.email ?? null
+  const photoURL = account?.picture ?? user?.photoURL ?? null
 
-  const displayName = user.displayName
-  const email = user.email
+  if (!account && !user) {
+    if (loading) {
+      return (
+        <span
+          className="size-8 shrink-0 rounded-full bg-muted/60"
+          aria-hidden
+        />
+      )
+    }
+    return null
+  }
 
   return (
     <DropdownMenu>
@@ -50,12 +69,16 @@ export function UserMenu() {
         <Button
           variant="ghost"
           size="icon"
-          className="size-8 rounded-full"
+          className="size-8 shrink-0 rounded-full"
           aria-label="Account menu"
         >
           <Avatar className="size-7">
-            {user.photoURL && (
-              <AvatarImage src={user.photoURL} alt={displayName ?? 'You'} />
+            {photoURL && (
+              <AvatarImage
+                src={photoURL}
+                alt={displayName ?? 'You'}
+                referrerPolicy="no-referrer"
+              />
             )}
             <AvatarFallback className="text-xs">
               {initials(displayName, email)}

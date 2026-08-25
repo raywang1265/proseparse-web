@@ -7,7 +7,7 @@ import { SessionSidebar } from './session-sidebar'
 import { ManuscriptEditor, type Lens, type SpeakerLens } from './manuscript-editor'
 import { InsightsPanel } from './insights-panel'
 import { ThemeToggle } from './theme-toggle'
-import { UserMenu } from './user-menu'
+import { UserMenu, type UserMenuAccount } from './user-menu'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -61,11 +61,13 @@ export function Workspace({
   folders,
   activeId,
   active,
+  account,
 }: {
   sessions: SidebarSession[]
   folders: SidebarFolder[]
   activeId: string | null
   active: ActiveSession | null
+  account: UserMenuAccount
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -128,6 +130,9 @@ export function Workspace({
 
   const canReanalyze = !isPending && active != null
   const progress = useEstimatedProgress(isPending)
+  const folderName = folders.find(
+    (f) => f.id === sessions.find((s) => s.id === active?.id)?.folderId,
+  )?.name
 
   function handleReanalyze() {
     if (!active) return
@@ -153,8 +158,8 @@ export function Workspace({
 
   return (
     <div className="bg-sky-app flex h-dvh flex-col overflow-hidden text-foreground">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/40 px-3">
-        <div className="flex items-center gap-2">
+      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border/40 px-3">
+        <div className="flex min-w-0 items-center gap-2">
           {collapsed && (
             <Button
               variant="ghost"
@@ -166,13 +171,17 @@ export function Workspace({
               <PanelLeftOpen className="size-4" />
             </Button>
           )}
-          <span className="text-sm text-muted-foreground">
-            <span className="text-foreground/80">Saltwater</span>
-            <span className="mx-1.5 text-muted-foreground/50">/</span>
+          <span className="min-w-0 truncate text-sm text-muted-foreground">
+            {folderName && (
+              <>
+                <span className="text-foreground/80">{folderName}</span>
+                <span className="mx-1.5 text-muted-foreground/50">/</span>
+              </>
+            )}
             {active?.title ?? 'No session'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {analyzeError && (
             <span
               className="max-w-56 truncate text-xs text-destructive"
@@ -210,7 +219,7 @@ export function Workspace({
             )}
           </Tooltip>
           <ThemeToggle />
-          <UserMenu />
+          <UserMenu account={account} />
         </div>
       </header>
       {progress.visible && (
