@@ -3,3 +3,10 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   sharp: true
+
+# firebase-admin's jwks-rsa dependency require()s jose synchronously, but the
+# version it resolves to by default (jose@6, ESM-only) breaks in Vercel's
+# CommonJS serverless runtime with ERR_REQUIRE_ESM. Pin to a jose release that
+# still ships a CJS build. See https://github.com/firebase/firebase-admin-node/issues/3181
+overrides:
+  jwks-rsa>jose: ^5.10.0
