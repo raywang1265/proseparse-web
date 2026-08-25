@@ -1,46 +1,45 @@
 import { Suspense } from 'react'
+import { connection } from 'next/server'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 import { AuthForm } from '@/components/landing/auth-form'
+import { WritingQuote } from '@/components/landing/writing-quote'
+import { pickRandomQuote } from '@/lib/writing-quotes'
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await connection()
+  const quote = pickRandomQuote()
+
   return (
-    <main className="flex min-h-dvh text-foreground">
-      {/* Brand panel */}
-      <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border/40 bg-card/40 p-10 lg:flex">
-        <Link href="/" aria-label="ProseParse home">
+    <main className="grid min-h-dvh text-foreground lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <aside className="relative hidden flex-col overflow-hidden border-r border-border/40 bg-card/40 p-10 xl:p-14 lg:flex">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-24 -top-32 size-[34rem] rounded-full bg-primary/8 blur-3xl"
+        />
+        <Link href="/" aria-label="ProseParse home" className="relative w-fit">
           <Logo />
         </Link>
 
-        <blockquote className="max-w-md">
-          <p className="text-balance font-serif text-3xl font-medium leading-snug tracking-tight text-foreground">
-            &ldquo;The lighthouse held its breath. She pressed her palm to the
-            cold glass and tasted salt on the wind.&rdquo;
-          </p>
-          <footer className="mt-5 text-sm text-muted-foreground">
-            A passage from a draft, read closely — its tension, voice, and
-            sensory texture mapped line by line.
-          </footer>
-        </blockquote>
-
-        <span className="text-sm text-muted-foreground">
-          A quiet place to read your own writing more closely.
-        </span>
+        <div className="relative flex flex-1 items-center">
+          <WritingQuote quote={quote} />
+        </div>
       </aside>
 
-      {/* Form panel */}
-      <div className="flex w-full flex-col lg:w-1/2">
-        <div className="p-5">
+      <div className="flex min-w-0 flex-col items-center px-6">
+        <div className="w-full max-w-[22rem] pt-5">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="-ml-3 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
             Back home
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-center px-5 pb-16">
+
+        <div className="flex w-full max-w-[22rem] flex-1 flex-col justify-center pb-16">
+          <WritingQuote quote={quote} size="sm" className="mb-10 lg:hidden" />
           <Suspense>
             <AuthForm />
           </Suspense>
