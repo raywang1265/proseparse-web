@@ -5,20 +5,16 @@ import { InkToChart } from './hero/ink-to-chart'
 
 export function Welcome() {
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-12 px-5 py-16 lg:py-24">
-      <div className="flex max-w-2xl flex-col items-center text-center">
-        <h1 className="text-balance font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-5xl">
-          Hello, and welcome to ProseParse.
-        </h1>
+    <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-5 pt-10 pb-6 sm:pt-14 lg:pt-16">
+      <div className="flex w-full max-w-3xl flex-col items-center text-center">
+        <h1 className="sr-only">Welcome to ProseParse</h1>
+        <InkToChart />
 
-        <p className="mt-5 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
-          A little workshop I built for reading drafts more closely. Drop in a
-          chapter and it&apos;ll sit beside your words, quietly mapping their
-          tension, pacing, voice, and sensory texture — so you can notice the
-          things that are easy to miss while you&apos;re writing.
+        <p className="-mt-2 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground sm:-mt-4">
+          A little tool I built, using ML techniques to process prose like data in order to give some broad insights into your writing
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="rounded-full">
             <Link href="/studio">
               Open the studio
@@ -34,15 +30,16 @@ export function Welcome() {
             <Link href="/login">Sign in</Link>
           </Button>
         </div>
+      </div>
 
-        <p className="mt-6 text-sm text-muted-foreground">
-          Made for friends who love their drafts. Your manuscript stays yours.
+      <footer className="mt-auto flex w-full max-w-lg flex-col items-center gap-2.5 pt-16 pb-1">
+        <p className="rounded-full border border-border/50 bg-card/40 px-3.5 py-1 text-[11px] leading-relaxed tracking-wide text-muted-foreground/80 backdrop-blur-sm">
+          A work in progress; treat the results with a grain of salt.
         </p>
-      </div>
-
-      <div className="w-full max-w-3xl">
-        <InkToChart />
-      </div>
+        <p className="text-xs text-muted-foreground/60">
+          Made for myself and anyone else who’s writing fiction :)
+        </p>
+      </footer>
     </section>
   )
 }

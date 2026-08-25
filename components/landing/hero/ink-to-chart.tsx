@@ -3,9 +3,10 @@
 /**
  * Landing hero — "ink to chart".
  *
- * A line of prose dissolves into drifting ink and reassembles as a five-axis
- * sensory radar, then flows back into words. Glyph positions are sampled once
- * from an offscreen canvas; from then on it is a plain particle system.
+ * The homepage title dissolves into drifting ink and reassembles as a
+ * five-axis sensory radar, then flows back into words. Glyph positions are
+ * sampled once from an offscreen canvas; from then on it is a plain particle
+ * system.
  *
  * The loop is deliberately slow: long holds at each end, long sine-eased
  * transitions between them, and a faint idle shimmer so the held states still
@@ -16,7 +17,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Pause, Play } from 'lucide-react'
 
-const LINE = 'she tasted salt on the wind'
+const LINE = 'Welcome to ProseParse'
 const AXES = 5
 /** Fraction of each radar axis reached by the plotted value. */
 const RADAR_VALUES = [0.92, 0.58, 0.74, 0.36, 0.66]
@@ -89,11 +90,11 @@ function sampleText(width: number, height: number, fontFamily: string) {
   if (!octx) return []
 
   octx.scale(dpr, dpr)
-  octx.font = `${Math.min(width / 13, height / 4)}px ${fontFamily}`
+  octx.font = `600 ${Math.min(width / 11, height / 3.2)}px ${fontFamily}`
   octx.textAlign = 'center'
   octx.textBaseline = 'middle'
   octx.fillStyle = '#fff'
-  octx.fillText(LINE, width / 2, height / 2)
+  octx.fillText(LINE, width / 2, height * 0.4)
 
   const { data } = octx.getImageData(0, 0, off.width, off.height)
   const found: { x: number; y: number }[] = []
@@ -300,9 +301,9 @@ export function InkToChart() {
     <div className="group relative w-full">
       <canvas
         ref={canvasRef}
-        className="h-72 w-full font-serif sm:h-96"
+        className="h-36 w-full font-serif sm:h-44 md:h-52"
         role="img"
-        aria-label="A line of prose dissolving into ink particles that reassemble as a five-axis sensory radar, then flow back into words."
+        aria-hidden="true"
       />
       <button
         type="button"
