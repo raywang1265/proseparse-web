@@ -114,7 +114,7 @@ export function AuthForm() {
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {isSignup
-          ? 'May you get some insight on your drafts'
+          ? 'May you gain some insight into your drafts'
           : "Hope your drafting is going well :)"}
       </p>
 
