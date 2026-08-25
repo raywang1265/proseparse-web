@@ -149,7 +149,7 @@ export function ExpositionTab({
               <Bar
                 dataKey="indirect"
                 stackId="exp"
-                fill="var(--color-chart-2)"
+                fill="var(--color-chart-5)"
                 radius={[3, 3, 0, 0]}
               >
                 {points.map((d) => (
@@ -181,7 +181,7 @@ export function ExpositionTab({
           </ResponsiveContainer>
         </div>
         <div className="mt-2 flex items-center justify-center gap-4 text-[11px]">
-          <Legend color="var(--color-chart-2)" label="Indirect (showing)" />
+          <Legend color="var(--color-chart-5)" label="Indirect (showing)" />
           <Legend color="var(--color-chart-4)" label="Direct (telling)" />
         </div>
       </InsightCard>

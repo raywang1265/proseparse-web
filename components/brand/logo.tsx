@@ -1,31 +1,42 @@
 import { cn } from '@/lib/utils'
 
+/** Same five-axis radar as the homepage animation. White strokes, no fill.
+ *  Placed so the bounding box of the shape is centred, not the hub. */
+function RadarGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <g
+        stroke="#fff"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="11.73" y1="14.03" x2="11.73" y2="2.4" />
+        <line x1="11.73" y1="14.03" x2="18.71" y2="11.77" />
+        <line x1="11.73" y1="14.03" x2="17.23" y2="21.6" />
+        <line x1="11.73" y1="14.03" x2="9.06" y2="17.71" />
+        <line x1="11.73" y1="14.03" x2="3.8" y2="11.45" />
+        <path d="M11.73 2.4 18.71 11.77 17.23 21.6 9.06 17.71 3.8 11.45Z" />
+      </g>
+    </svg>
+  )
+}
+
 export function LogoMark({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'flex items-center justify-center rounded-xl bg-primary text-primary-foreground',
+        'flex items-center justify-center rounded-xl bg-primary',
         className,
       )}
       aria-hidden="true"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-[58%]"
-      >
-        {/* parsed lines of prose */}
-        <path d="M5 6h14" />
-        <path d="M5 10h9" />
-        <path d="M5 14h11" />
-        {/* parse marker underlining a passage */}
-        <path d="M5 18h6" className="opacity-60" />
-        <circle cx="17.5" cy="17.5" r="2.5" />
-      </svg>
+      <RadarGlyph className="size-[80%]" />
     </span>
   )
 }
