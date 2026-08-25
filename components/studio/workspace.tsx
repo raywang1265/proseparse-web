@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { PanelLeftOpen, Sparkles, Loader2 } from 'lucide-react'
+import { PanelLeftOpen, Sparkles, Loader2, Plus } from 'lucide-react'
 import { SessionSidebar } from './session-sidebar'
 import { ManuscriptEditor, type Lens, type SpeakerLens } from './manuscript-editor'
 import { InsightsPanel } from './insights-panel'
@@ -14,7 +14,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { saveSessionTextAction, analyzeSessionAction } from '@/app/studio/actions'
+import {
+  saveSessionTextAction,
+  analyzeSessionAction,
+  createSessionAction,
+} from '@/app/studio/actions'
 import type { SidebarSession, SidebarFolder, ActiveSession, ViewState } from './types'
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -65,6 +69,7 @@ export function Workspace({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isCreating, startCreate] = useTransition()
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
   const [lens, setLens] = useState<Lens>('none')
@@ -136,6 +141,13 @@ export function Workspace({
           err instanceof Error ? err.message : 'Analysis failed. Please try again.',
         )
       }
+    })
+  }
+
+  function handleNew() {
+    startCreate(async () => {
+      const { id } = await createSessionAction({})
+      router.push(`/studio?s=${id}`)
     })
   }
 
@@ -257,8 +269,24 @@ export function Workspace({
             />
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-            Select or create a session to begin.
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
+            <p className="text-sm font-medium text-foreground">No session open</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Start a new analysis to paste a draft and map its voice, exposition,
+              and sensory texture.
+            </p>
+            <Button
+              onClick={handleNew}
+              disabled={isCreating}
+              className="mt-1 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {isCreating ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Plus className="size-4" />
+              )}
+              New Analysis
+            </Button>
           </div>
         )}
       </div>

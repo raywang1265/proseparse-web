@@ -541,9 +541,15 @@ function RootSection({
         {sessions.map((s) => (
           <SessionItem key={s.id} session={s} activeId={activeId} />
         ))}
-        {sessions.length === 0 && hasFolders && (
-          <li className="px-3 py-2 text-[11px] italic text-muted-foreground/50">
-            No unfiled sessions
+        {sessions.length === 0 && (
+          <li
+            className={
+              hasFolders
+                ? 'px-3 py-2 text-[11px] italic text-muted-foreground/50'
+                : 'px-3 py-6 text-center text-xs text-muted-foreground'
+            }
+          >
+            {hasFolders ? 'No unfiled sessions' : 'No sessions yet'}
           </li>
         )}
       </ul>

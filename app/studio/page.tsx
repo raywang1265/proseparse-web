@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { getCurrentUser } from '@/lib/auth/server'
 import { ensureUser, listSessions, listFolders, getSession } from '@/lib/db/queries'
-import { seedSessionForUser } from '@/lib/db/seed'
 import { Workspace } from '@/components/studio/workspace'
 import type {
   SidebarSession,
@@ -26,12 +25,7 @@ export default async function Page({
 
   await ensureUser(user)
 
-  let list = await listSessions(user.uid)
-  if (list.length === 0) {
-    await seedSessionForUser(user.uid)
-    list = await listSessions(user.uid)
-  }
-
+  const list = await listSessions(user.uid)
   const folderList = await listFolders(user.uid)
 
   const { s } = await searchParams
