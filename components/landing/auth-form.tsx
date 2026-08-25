@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { FirebaseError } from 'firebase/app'
 import { useAuth } from '@/lib/auth/context'
@@ -35,8 +35,17 @@ function messageForError(err: unknown): string {
   return 'Something went wrong. Please try again.'
 }
 
+// Signing in changes what the server returns for every gated route, and the
+// client router may hold a prefetched `/studio` response from before the
+// session cookie existed (which middleware answered with a redirect back to
+// `/login`). A full document navigation discards that cache instead of
+// bouncing between the two stale redirects.
+function navigateAfterAuth(next: string) {
+  const target = /^\/(?!\/)/.test(next) ? next : '/studio'
+  window.location.assign(target)
+}
+
 export function AuthForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || '/studio'
   const { signInWithEmail, signUpWithEmail, signInWithGoogle, resetPassword } =
@@ -63,7 +72,7 @@ export function AuthForm() {
       } else {
         await signInWithEmail(email, password)
       }
-      router.push(next)
+      navigateAfterAuth(next)
     } catch (err) {
       setError(messageForError(err))
       setPending(false)
@@ -76,7 +85,7 @@ export function AuthForm() {
     setPending(true)
     try {
       await signInWithGoogle()
-      router.push(next)
+      navigateAfterAuth(next)
     } catch (err) {
       setError(messageForError(err))
       setPending(false)
