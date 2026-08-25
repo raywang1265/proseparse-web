@@ -109,7 +109,14 @@ export function AuthForm() {
 
   return (
     <div className="w-full">
-      <h1 className="sr-only">{isSignup ? 'Create an account' : 'Sign in'}</h1>
+      <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+        {isSignup ? 'Make yourself at home' : 'Welcome back'}
+      </h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {isSignup
+          ? 'May you get some insight on your drafts'
+          : "Hope your drafting is going well :)"}
+      </p>
 
       <Button
         type="button"
@@ -117,7 +124,7 @@ export function AuthForm() {
         size="lg"
         onClick={handleGoogle}
         disabled={pending}
-        className="w-full gap-2 rounded-full"
+        className="mt-8 w-full gap-2 rounded-full"
       >
         <GoogleIcon className="size-4" />
         Continue with Google
