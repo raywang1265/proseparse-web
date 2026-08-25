@@ -48,8 +48,8 @@ export function ExpositionTab({
           subtitle="Direct telling vs. indirect showing, paragraph by paragraph"
         >
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Exposition analysis is unavailable for this draft. Re-analyze when
-            the analysis backend is configured.
+            No exposition findings for this draft — either nothing stood out, or
+            something went wrong during analysis.
           </p>
         </InsightCard>
       </div>

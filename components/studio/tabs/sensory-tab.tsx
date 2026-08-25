@@ -51,8 +51,8 @@ export function SensoryTab({ analysis }: { analysis: StudioAnalysis }) {
           subtitle="Balance of the five senses across the scene"
         >
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Sensory analysis is unavailable for this draft. Re-analyze when the
-            analysis backend is configured.
+            No sensory findings for this draft — either nothing stood out, or
+            something went wrong during analysis.
           </p>
         </InsightCard>
       </div>

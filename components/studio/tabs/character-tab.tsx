@@ -143,9 +143,8 @@ export function CharacterTab({
     return (
       <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
         <p className="text-sm text-muted-foreground">
-          No voice analysis yet. Run{' '}
-          <strong className="text-foreground">Re-analyze</strong> with the
-          analysis backend configured to extract character voices.
+          No character voices found for this draft — either none were detected,
+          or something went wrong during analysis.
         </p>
       </div>
     )

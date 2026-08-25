@@ -129,6 +129,10 @@ export function Workspace({
   }
 
   const canReanalyze = !isPending && active != null
+  // A draft that has never been analyzed gets "Analyze"; one with existing
+  // results (even stale ones) gets "Re-analyze".
+  const hasAnalysis = active?.analysis != null
+  const analyzeLabel = hasAnalysis ? 'Re-analyze' : 'Analyze'
   const progress = useEstimatedProgress(isPending)
   const folderName = folders.find(
     (f) => f.id === sessions.find((s) => s.id === active?.id)?.folderId,
@@ -208,13 +212,15 @@ export function Workspace({
                   ) : (
                     <Sparkles className="size-3.5" />
                   )}
-                  {isPending ? 'Analyzing…' : 'Re-analyze'}
+                  {isPending ? 'Analyzing…' : analyzeLabel}
                 </Button>
               </span>
             </TooltipTrigger>
             {!isPending && (
               <TooltipContent side="bottom">
-                {active ? 'Re-analyze this draft' : 'Open a session to analyze'}
+                {active
+                  ? `${analyzeLabel} this draft`
+                  : 'Open a session to analyze'}
               </TooltipContent>
             )}
           </Tooltip>
